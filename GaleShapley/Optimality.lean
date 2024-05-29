@@ -56,11 +56,9 @@ lemma neverRejectedByPossibleMatch' (state: GaleShapleyState M W) (m: M) (w: W):
       by_contra bad
       simp [bad] at m_rejectee
     simp [w_matched] at m_rejectee
-    let m' := newMatch nd_rjs
-    have m'_rfl: m' = newMatch nd_rjs := by rfl
+    set m' := newMatch nd_rjs with m'_rfl
     have m'_ne_m: m' ≠ m := by
       by_contra bad
-      simp [m'] at bad
       rw [bad] at m_rejectee
       split_ifs at m_rejectee <;> try contradiction
       case _ m_curMatch =>
@@ -78,7 +76,6 @@ lemma neverRejectedByPossibleMatch' (state: GaleShapleyState M W) (m: M) (w: W):
         exact ⟨m'_proposed, w_proposee⟩
       · tauto
     have w_prefers_m': (wPref w).symm m' < (wPref w).symm m := by
-      simp [← m'_rfl] at m_rejectee
       simp [newMatch, (pref_invariant' _ rejection_state h_rjs).2, w_proposee] at m'_rfl
       split at m_rejectee
       · case _ m'_curMatch =>

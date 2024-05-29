@@ -344,9 +344,8 @@ theorem hwangTheorem (matching: Matching M W) (existsRevendicateur: ∃ m, reven
     )
     simp at exists_last_rev_proposal
 
-    let last_rev_proposal := choose exists_last_rev_proposal
+    set last_rev_proposal := choose exists_last_rev_proposal with last_rev_proposal_rfl
     have last_rev_proposal_property := choose_spec exists_last_rev_proposal
-    have last_rev_proposal_rfl: last_rev_proposal = choose exists_last_rev_proposal := by rfl
     rw [← last_rev_proposal_rfl] at last_rev_proposal_property
     rcases last_rev_proposal_property with ⟨h_lrp, ⟨r, r_rev, r_unmatched⟩, tail_condition⟩
 

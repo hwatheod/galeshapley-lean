@@ -87,8 +87,7 @@ theorem inverseProperty' (matching: Matching M W):
   constructor
   · intro mw
     have: ∃ m, matching m = some w := by use m
-    set m'Option := inverseMatching' matching w
-    have m'Option_rfl: m'Option = inverseMatching' matching w := by rfl
+    set m'Option := inverseMatching' matching w with m'Option_rfl
     simp [inverseMatching', this] at m'Option_rfl
     rcases m'Option with _ | m'
     tauto
