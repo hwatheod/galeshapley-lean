@@ -45,12 +45,6 @@ decreasing_by
   simp [h] at this
   exact this
 
-def pureNextStep (nextStep: α → Option α): α -> α :=
-  -- fun s => Option.getD (nextStep s) Inhabited.default
-  fun s => match nextStep s with
-           | none => Inhabited.default
-           | some newState => newState
-
 lemma iterateIsNonEmpty (step: Terminator α) (state: α):
     iterate step state ≠ [] := by
   unfold iterate
