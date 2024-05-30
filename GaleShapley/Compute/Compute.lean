@@ -4,30 +4,30 @@ open GaleShapley.Compute
 
 def mPrefTable2: List ((Fin 2) ≃ (Fin 2)) :=
   [
-    List.Nodup.getEquivOfForallMemList [1, 0]  (by simp) (by intro; simp; omega),
-    List.Nodup.getEquivOfForallMemList [0, 1]  (by simp) (by intro; simp; omega)
+    List.Nodup.getEquivOfForallMemList [1, 0]  (by decide) (by decide),
+    List.Nodup.getEquivOfForallMemList [0, 1]  (by decide) (by decide)
   ]
 
 def wPrefTable2: List ((Fin 2) ≃ (Fin 2)) :=
   [
-    List.Nodup.getEquivOfForallMemList [0, 1]  (by simp) (by intro; simp; omega),
-    List.Nodup.getEquivOfForallMemList [0, 1]  (by simp) (by intro; simp; omega)
+    List.Nodup.getEquivOfForallMemList [0, 1]  (by decide) (by decide),
+    List.Nodup.getEquivOfForallMemList [0, 1]  (by decide) (by decide)
   ]
 
 def mPrefTable4: List ((Fin 4) ≃ (Fin 4)) :=
   [
-    List.Nodup.getEquivOfForallMemList [0, 1, 2, 3]  (by simp) (by intro; simp; omega),
-    List.Nodup.getEquivOfForallMemList [0, 3, 2, 1]  (by simp) (by intro; simp; omega),
-    List.Nodup.getEquivOfForallMemList [1, 0, 2, 3]  (by simp) (by intro; simp; omega),
-    List.Nodup.getEquivOfForallMemList [3, 1, 2, 0]  (by simp) (by intro; simp; omega)
+    List.Nodup.getEquivOfForallMemList [0, 1, 2, 3]  (by decide) (by decide),
+    List.Nodup.getEquivOfForallMemList [0, 3, 2, 1]  (by decide) (by decide),
+    List.Nodup.getEquivOfForallMemList [1, 0, 2, 3]  (by decide) (by decide),
+    List.Nodup.getEquivOfForallMemList [3, 1, 2, 0]  (by decide) (by decide)
   ]
 
 def wPrefTable4: List ((Fin 4) ≃ (Fin 4)) :=
   [
-    List.Nodup.getEquivOfForallMemList [3, 2, 0, 1]  (by simp) (by intro; simp; omega),
-    List.Nodup.getEquivOfForallMemList [1, 3, 0, 2]  (by simp) (by intro; simp; omega),
-    List.Nodup.getEquivOfForallMemList [3, 0, 1, 2]  (by simp) (by intro; simp; omega),
-    List.Nodup.getEquivOfForallMemList [2, 1, 0, 3]  (by simp) (by intro; simp; omega)
+    List.Nodup.getEquivOfForallMemList [3, 2, 0, 1]  (by decide) (by decide),
+    List.Nodup.getEquivOfForallMemList [1, 3, 0, 2]  (by decide) (by decide),
+    List.Nodup.getEquivOfForallMemList [3, 0, 1, 2]  (by decide) (by decide),
+    List.Nodup.getEquivOfForallMemList [2, 1, 0, 3]  (by decide) (by decide)
   ]
 
 -- we can run a small case of size 2
@@ -66,9 +66,7 @@ def example2_matching: Matching M4 W4 := {
     | _ => none
   matchingCondition := by
     simp [isMatching]
-    intro m1 m2 w
-    split <;> simp <;> split <;> simp <;>
-      (intro; apply_fun (fun x => x.val); simp; omega; exact Fin.val_injective)
+    decide
 }
 
 #eval isStableMatching mPref4 wPref4 example2_matching
@@ -83,9 +81,7 @@ def example2_matching': Matching M4 W4 := {
     | _ => none
   matchingCondition := by
     simp [isMatching]
-    intro m1 m2 w
-    split <;> simp <;> split <;> simp <;>
-      (intro; apply_fun (fun x => x.val); simp; omega; exact Fin.val_injective)
+    decide
 }
 
 #eval isStableMatching mPref4 wPref4 example2_matching'
