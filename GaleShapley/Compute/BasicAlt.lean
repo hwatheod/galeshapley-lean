@@ -265,7 +265,7 @@ theorem galeShapleyIterateNonEmpty: ∀ (state: GaleShapleyState M W),
   unfold galeShapleyIterate
   split <;> simp
 
-theorem galeShapleyIterateNonEmpty: galeShapleyList mPref wPref ≠ [] := by
+theorem galeShapleyListNonEmpty: galeShapleyList mPref wPref ≠ [] := by
   apply galeShapleyIterateNonEmpty
 
 lemma iterate_single_state {state: GaleShapleyState M W} (noneStep: galeShapleyNextStep state = none):
@@ -279,7 +279,7 @@ lemma iterate_next_state {state: GaleShapleyState M W} (nextStep: galeShapleyNex
   rw [nextStep]
 
 def galeShapleyFinalState: GaleShapleyState M W :=
-  List.getLast (galeShapleyList mPref wPref) (galeShapleyIterateNonEmpty mPref wPref)
+  List.getLast (galeShapleyList mPref wPref) (galeShapleyListNonEmpty mPref wPref)
 
 lemma pref_invariant': ∀ state: (GaleShapleyState M W),
     ∀ s ∈ (galeShapleyIterate state), s.mPref = state.mPref ∧ s.wPref = state.wPref := by
