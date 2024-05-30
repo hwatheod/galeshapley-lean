@@ -235,10 +235,10 @@ lemma galeShapleyDecreasing {state : GaleShapleyState M W}
   omega
 
 set_option linter.unusedVariables false in
-def galeShapleyIterate (state: GaleShapleyState M W): List (GaleShapleyState M W) :=
+def galeShapleyFinalState (state: GaleShapleyState M W): GaleShapleyState M W :=
     match h: galeShapleyNextStep state with  -- h is needed in the decreasing_by proof
-    | none => [state]
-    | some newState => state :: galeShapleyIterate newState
+    | none => state
+    | some newState => galeShapleyFinalState newState
 termination_by
   galeShapleyTermination state
 decreasing_by
@@ -260,21 +260,7 @@ def initialState: GaleShapleyState M W := {
     noWorseThanProposedTo := by simp
   }
 
-def galeShapleyList: List (GaleShapleyState M W) := galeShapleyIterate (initialState mPref wPref)
-
-theorem galeShapleyIterateNonEmpty: ∀ (state: GaleShapleyState M W),
-    galeShapleyIterate state ≠ [] := by
-  intro state
-  unfold galeShapleyIterate
-  split <;> simp
-
-theorem galeShapleyListNonEmpty: galeShapleyList mPref wPref ≠ [] := by
-  apply galeShapleyIterateNonEmpty
-
-def galeShapleyFinalState: GaleShapleyState M W :=
-  (galeShapleyList mPref wPref).getLast (galeShapleyListNonEmpty mPref wPref)
-
-def galeShapley: Matching M W := (galeShapleyFinalState mPref wPref).matching
+def galeShapley: Matching M W := (galeShapleyFinalState (initialState mPref wPref)).matching
 
 abbrev isUnstablePair (matching: Matching M W) (m: M) (w: W): Prop :=
   let invMatching := inverseMatching matching
