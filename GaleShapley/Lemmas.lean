@@ -816,16 +816,13 @@ lemma rejectedByPreferred {state: GaleShapleyState M W}
         refine ⟨s_pred, h_s_pred, (iterateNextState s_pred_is_pred),
             (by push_neg; symm; exact iterate_ne_predecessor s_pred_is_pred),
             nextStateSomeIsNotDone s_pred_is_pred, ?_⟩
-        have := matching_nextState s_pred_is_pred m
-        simp [h2, h3, m_no_propose] at this
-        split_ifs at this; try contradiction
-        case _ m_eq_curMatch m_ne_newMatch =>
+        have := becameSingleImpliesRejected s_pred_is_pred (by
+          rw [Option.ne_none_iff_exists']
+          use w
+        ) h3
         unfold rejectedAtState
-        have := curMatch_lemma (nextStateSomeIsNotDone s_pred_is_pred) m_eq_curMatch
-        simp [h2] at this
-        refine ⟨this.symm, ?_⟩
-        unfold rejectee
-        simp [m_eq_curMatch]
+        rw [h2] at this
+        simp at this
         tauto
       · simp [h2, h3] at m_prefers_w' h
         have := matchedEitherSameOrSingleNext s_pred_is_pred h2
