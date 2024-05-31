@@ -730,7 +730,6 @@ lemma rejectedByPreferred {state: GaleShapleyState M W}
   revert h_state
   apply stateStrongInduction galeShapleyTerminator (initialState mPref wPref)
   simp
-  save
   intros s hs ih w' m_prefers_w'
 
   by_cases h: s = initialState mPref wPref
