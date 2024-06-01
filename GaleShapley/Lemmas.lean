@@ -505,6 +505,12 @@ lemma noMoreProposalsImpliesSingle''' {state: GaleShapleyState M W} (m: M):
   apply noMoreProposalsImpliesSingle'' s_done.1 s_done.2
   exact List.getLast_mem (galeShapleyIterateNonEmpty s)
 
+lemma noMoreProposalsImpliesSingle (m: M): (∃ s ∈ galeShapleyList mPref wPref,
+    s.matching m = none ∧ s.proposeIndex m = Fintype.card W) → (galeShapley mPref wPref) m = none := by
+  intro m_done_at_some_point
+  have := noMoreProposalsImpliesSingle''' m m_done_at_some_point
+  exact this.1
+
 lemma changedPartnerMustBecomeSingle {m: M} {w: W} (state: GaleShapleyState M W)
     (origPartner: state.matching m = some w)
     (finalPartner: ((galeShapleyIterate state).getLast (galeShapleyIterateNonEmpty _)).matching m ≠ some w):
@@ -637,12 +643,6 @@ lemma rejectedEndsUpWithWorse {m: M} {w w': W}
       suffices state.proposeIndex m ≤ nextState.proposeIndex m by omega
       exact proposeIndexIsMonotonic_nextState nextStep m
 
-lemma noMoreProposalsImpliesSingle (m: M): (∃ s ∈ galeShapleyList mPref wPref,
-    s.matching m = none ∧ s.proposeIndex m = Fintype.card W) → (galeShapley mPref wPref) m = none := by
-  intro m_done_at_some_point
-  have := noMoreProposalsImpliesSingle''' m m_done_at_some_point
-  exact this.1
-
 lemma matchedNeverRejectedImpliesFinalMatch {state: GaleShapleyState M W}:
     state.matching m = some w → neverRejectedFromState state m w →
     ((galeShapleyIterate state).getLast
@@ -706,7 +706,7 @@ lemma proposedNeverRejectedImpliesFinalMatch {state: GaleShapleyState M W} (h: n
     rcases this <;> try tauto
     case _ cur_eq_new =>
     unfold rejectee at not_rejected_now
-    simp [← m_proposer, w_proposee, ← cur_eq_new] at not_rejected_now
+    simp [← m_proposer, ← cur_eq_new] at not_rejected_now
 
 lemma singleImpliesRejectedByAll (m_single: galeShapley mPref wPref m = none):
     ∀ w, ∃ state ∈ galeShapleyList mPref wPref, ∃ (h: notDone state),
