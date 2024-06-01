@@ -266,7 +266,7 @@ lemma neg_hwang_case1_lemma: ¬ (hwang_case1_hypothesis mPref wPref matching) �
   omega
 
 /- An auxillary lemma stating that all revendicateurs are married in `galeShapley` (under the
-   `both_same_spouses_hypothesis` which follows from the negation of `hwang_case1_hypothesis).
+   `both_same_spouses_hypothesis` which follows from the negation of `hwang_case1_hypothesis`).
  -/
 lemma all_revendicateurs_gs_married_lemma (matching: Matching M W):
     both_same_spouses_hypothesis mPref wPref matching →
@@ -432,11 +432,8 @@ theorem hwangTheorem (matching: Matching M W) (existsRevendicateur: ∃ m, reven
       omega
 
     -- Let w' be the spouse of r' in GS
-    have: ∃ w', galeShapley mPref wPref r' = some w' := by
-      have := all_revendicateurs_gs_married r' r'_rev
-      rcases h1: galeShapley mPref wPref r'
-      · contradiction
-      · tauto
+    have: ∃ w', galeShapley mPref wPref r' = some w' :=
+      Option.ne_none_iff_exists'.mp (all_revendicateurs_gs_married r' r'_rev)
     obtain ⟨w', r'_gs_matches_w'⟩ := this
 
     /- since r' is a revendicateur, r' prefers w to w'. -/
@@ -533,11 +530,12 @@ theorem hwangTheorem (matching: Matching M W) (existsRevendicateur: ∃ m, reven
           · exact False.elim (m_ne_r c1.symm)
 
     have m_unmatched_next: nextState.matching m = none := by
-      have := matching_nextState' notLast m
-      simp_rw [nextStep] at this
-      simp [pref_inv.1, pref_inv.2, r_proposer, r_proposed_to_w, m_matched_w, newMatch, curMatch,
-        show (wPref w).symm r ≤ (wPref w).symm m by omega, m_ne_r] at this
-      exact this
+      have := matchedEitherSameOrSingleNext' notLast w_penultimate_gs_match_m
+      simp [nextStep] at this
+      rcases this <;> tauto
+      case _ c1 =>
+      have := matchingCondition' c1 w_rfl
+      contradiction
 
     have m_notrev: ¬ (revendicateur mPref wPref matching m) := by
       by_contra bad
