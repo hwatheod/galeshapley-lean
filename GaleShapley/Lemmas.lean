@@ -360,9 +360,9 @@ lemma proposeIndexInequality' (state: GaleShapleyState M W) (m: M) (w: W)
   · have s_pred := iterate_predecessor hs h
     obtain ⟨s_pred, ⟨h_s_pred, s_pred_is_pred⟩, _⟩ := s_pred
     specialize ih s_pred h_s_pred (iterate_ne_predecessor s_pred_is_pred) (iterateNextState s_pred_is_pred)
-    by_cases h2: ((mPref m).symm w) < s_pred.proposeIndex m
+    by_cases h2: (mPref m).symm w < s_pred.proposeIndex m
     · simp only [h2, iff_true] at ih
-      have: ((mPref m).symm w) < s.proposeIndex m := by
+      have: (mPref m).symm w < s.proposeIndex m := by
         have := proposeIndexIsMonotonic_nextState s_pred_is_pred m
         omega
       simp only [this, iff_true]
@@ -430,9 +430,7 @@ lemma proposeIndexInequality (m: M) (w: W):
   constructor
   · intro lhs
     obtain ⟨s, hs, nd, proposed⟩ := lhs
-    use s
-    use hs
-    use nd
+    exists s, hs, nd
     simp [proposed]
     constructor
     · by_contra bad
@@ -442,12 +440,7 @@ lemma proposeIndexInequality (m: M) (w: W):
       rw [this] at nd
       contradiction
     · exact finalState s hs
-  · intro lhs
-    obtain ⟨s, hs, nd, proposed⟩ := lhs
-    use s
-    use hs
-    use nd
-    exact proposed.2.2
+  · tauto
 
 lemma noMoreProposalsImpliesSingle'' {state: GaleShapleyState M W}
     (unmatched: state.matching m = none) (outOfProposals: state.proposeIndex m = Fintype.card W):
@@ -709,7 +702,7 @@ lemma matchedImpliesProposedEarlier {state: GaleShapleyState M W}
       s ≠ state ∧ state ∈ galeShapleyIterate s ∧ proposedAtState nd_s m w := by
   have := state.matchedLastProposed m w matched
   simp [(pref_invariant' (initialState mPref wPref) state h_state).1] at this
-  have: ((mPref m).symm w) < state.proposeIndex m := by omega
+  have: (mPref m).symm w < state.proposeIndex m := by omega
   rw [← proposeIndexInequality'] at this <;> try assumption
 
 lemma rejectedByPreferred {state: GaleShapleyState M W}
