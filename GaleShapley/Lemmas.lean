@@ -172,6 +172,26 @@ lemma becameSingleImpliesRejected {state: GaleShapleyState M W} {m: M}
   simp [curMatch, ← inverseProperty _ _ _] at m_eq_curMatch
   exact m_eq_curMatch
 
+lemma proposerRemainsSingleImpliesRejected {state: GaleShapleyState M W} {m: M}
+    (nextStateSome: galeShapleyNextStep state = some nextState)
+    (m_proposed: m = choose (nextStateSomeIsNotDone nextStateSome))
+    (m_unmatched_after: nextState.matching m = none):
+    rejectee (nextStateSomeIsNotDone nextStateSome) = some m := by
+  have := matching_nextState nextStateSome m
+  simp [m_unmatched_after] at this
+  split_ifs at this <;> tauto
+  case _ _ m_ne_newMatch =>
+  unfold rejectee
+  rcases h: curMatch (nextStateSomeIsNotDone nextStateSome) with _ | m' <;> simp [h]
+  · simp [newMatch, h] at m_ne_newMatch
+    tauto
+  · rw [← m_proposed]
+    split_ifs <;> tauto
+    have := newMatch_choices (nextStateSomeIsNotDone nextStateSome)
+    rw [← m_proposed, h] at this
+    simp at this
+    tauto
+
 lemma curMatchedNextStepDidntIncreaseProposeIndex' {state: GaleShapleyState M W} {m: M}
     (h: notDone state)
     (m_matched_before: state.matching m ≠ none):
@@ -776,17 +796,9 @@ lemma rejectedByPreferred {state: GaleShapleyState M W}
           have w'_proposee: proposee (nextStateSomeIsNotDone s_pred_is_pred) = w' := by
             unfold proposee
             simp [← m_proposed, this, (pref_invariant' (initialState mPref wPref) s_pred h_s_pred).1]
-          unfold rejectedAtState rejectee
-          simp_rw [← m_proposed]
-          simp [w'_proposee]
-          have := matching_nextState s_pred_is_pred m
-          simp [h2, h3, ← m_proposed, w'_proposee] at this
-          split_ifs at this; try contradiction
-          case _ m_ne_newMatch =>
-          push_neg at m_ne_newMatch
-          have := newMatch_choices (nextStateSomeIsNotDone s_pred_is_pred)
-          simp [← m_proposed, m_ne_newMatch.symm] at this
-          simp [this.symm]
+          have := proposerRemainsSingleImpliesRejected s_pred_is_pred m_proposed h3
+          unfold rejectedAtState
+          tauto
         · case _ m_not_proposed =>
           rw [s_proposeIndex] at m_prefers_w'
           omega
