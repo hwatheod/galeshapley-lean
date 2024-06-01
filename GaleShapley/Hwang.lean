@@ -48,10 +48,7 @@ lemma revSpousesMarriedInGs (matching: Matching M W):
   simp [revendicateurSpouses] at this
   obtain ⟨m, m_rev, m_matches_w⟩ := this
   unfold revendicateur at m_rev
-  obtain ⟨w', m_matches_w', m_rev⟩ := m_rev
-  have: w' = w := matchingCondition'' m_matches_w' m_matches_w
-  rw [this] at m_rev
-  clear w' m_matches_w' this
+  simp [m_matches_w] at m_rev
   suffices isUnstablePair mPref wPref (galeShapley mPref wPref) m w by
     apply galeShapleyNoUnstablePair mPref wPref this
   unfold isUnstablePair
@@ -263,9 +260,9 @@ lemma neg_hwang_case1_lemma: ¬ (hwang_case1_hypothesis mPref wPref matching) �
     have ⟨_, hf1⟩ := hf s1 (Subtype.mem s1)
     have ⟨_, hf2⟩ := hf s2 (Subtype.mem s2)
     simp [f_restrict, Set.codRestrict] at s1_eq_s2
-    rw [s1_eq_s2] at hf1
-    have := matchingCondition'' hf1 hf2
-    exact SetCoe.ext this
+    rw [s1_eq_s2, hf2] at hf1
+    simp at hf1
+    exact SetCoe.ext hf1.symm
   omega
 
 /- An auxillary lemma stating that all revendicateurs are married in `galeShapley` (under the
@@ -430,10 +427,8 @@ theorem hwangTheorem (matching: Matching M W) (existsRevendicateur: ∃ m, reven
       by_contra r'_eq_r
       rw [r'_eq_r] at r'_matches_w
       unfold revendicateur at r_rev
-      obtain ⟨w', r_matches_w', h1⟩ := r_rev
-      have: w' = w := matchingCondition'' r_matches_w' r'_matches_w
-      rw [this] at h1
-      specialize h1 w r_gs_matches_w
+      simp [r'_matches_w] at r_rev
+      specialize r_rev w r_gs_matches_w
       omega
 
     -- Let w' be the spouse of r' in GS
@@ -447,9 +442,7 @@ theorem hwangTheorem (matching: Matching M W) (existsRevendicateur: ∃ m, reven
     /- since r' is a revendicateur, r' prefers w to w'. -/
     have r'_prefers_w_to_w': (mPref r').symm w < (mPref r').symm w' := by
       unfold revendicateur at r'_rev
-      obtain ⟨w'', r'_matches_w'', r'_rev⟩ := r'_rev
-      have: w'' = w := matchingCondition'' r'_matches_w'' r'_matches_w
-      rw [this] at r'_rev
+      simp [r'_matches_w] at r'_rev
       exact r'_rev w' r'_gs_matches_w'
 
     /- Therefore r' proposed to w before ending up with w'. -/
@@ -565,22 +558,17 @@ theorem hwangTheorem (matching: Matching M W) (existsRevendicateur: ∃ m, reven
     · rcases h: matching m with _ | w''
       · simp
       · simp [h]
-        -- w rejected m so m prefers w to his final gs match w''', whom he weak-prefers to his
+        -- w rejected m so m prefers w to his final gs match w0, whom he weak-prefers to his
         -- `matching` match w'' since m is a non-revendicateur.
         unfold revendicateur at m_notrev
         push_neg at m_notrev
         specialize m_notrev w'' h
         obtain ⟨w0, m_gs_matches_w0, w0_inequality⟩ := m_notrev
-        rcases h2: (galeShapley mPref wPref) m with _ | w'''
-        · rw [h2] at m_gs_matches_w0
-          contradiction
-        · have: w0 = w''' := matchingCondition'' m_gs_matches_w0 h2
-          rw [this] at w0_inequality m_gs_matches_w0
-          suffices (mPref m).symm w < (mPref m).symm w''' by omega
-          have := rejectedEndsUpWithWorse (w' := w''') nextStep
-            w_penultimate_gs_match_m m_unmatched_next
-          rw [pref_inv.1, ← lastInvariant] at this
-          exact this m_gs_matches_w0
+        suffices (mPref m).symm w < (mPref m).symm w0 by omega
+        have := rejectedEndsUpWithWorse (w' := w0) nextStep
+          w_penultimate_gs_match_m m_unmatched_next
+        rw [pref_inv.1, ← lastInvariant] at this
+        exact this m_gs_matches_w0
     · right
       simp [(inverseProperty matching r' w).mp r'_matches_w]
       /- We must show that w prefers m to r'.
@@ -603,10 +591,7 @@ theorem hwangTheorem (matching: Matching M W) (existsRevendicateur: ∃ m, reven
       have: ((mPref r').symm w) < last_rev_proposal.proposeIndex r' := by
         rwa [r'_final_proposeIndex] at r'_proposed_w
       specialize noWorse_ineq this
-      obtain ⟨m', w_inverse_matches_m', w_weakprefers_m'⟩ := noWorse_ineq
-      have := (inverseProperty last_rev_proposal.matching m' w).mpr w_inverse_matches_m'
-      have: m = m' := matchingCondition' w_penultimate_gs_match_m this
-      rw [← this] at w_weakprefers_m'
+      simp [m_matched_w] at noWorse_ineq
       by_contra bad
       have: (wPref w).symm m = (wPref w).symm r' := by omega
       have := ((wPref w).symm.injective this)

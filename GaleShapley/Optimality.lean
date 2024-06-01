@@ -187,7 +187,6 @@ theorem proposerOptimal (matching: Matching M W) (stable: isStableMatching mPref
     have proposalIndexEq := (galeShapleyFinalState mPref wPref).matchedLastProposed m w m_gs_matches_w
     simp at proposalIndexEq
     have := (proposeIndexInequality mPref wPref m w).mpr
-    simp at this
     specialize this (by omega)
     unfold proposed at this
     obtain ⟨s, hs, h, m_proposed_w⟩ := this

@@ -34,18 +34,11 @@ theorem matching_coe_injective (a: Matching M W) (b: Matching M W):
     (↑a : M → Option W) = (↑b: M → Option W) → a = b := by
   exact fun a_1 => (fun x y => (Matching.ext_iff x y).mpr) a b a_1
 
-/- Two other versions of injectivity which are sometimes useful -/
+/- Another version of injectivity which is sometimes useful -/
 theorem matchingCondition' {matching: Matching M W}: ∀ {w}, matching m1 = some w → matching m2 = some w → m1 = m2 := by
   intro w c1 c2
   rw [← c2] at c1
   exact matching.matchingCondition ⟨w, c2⟩ c1
-
-theorem matchingCondition'' {matching: Matching M W}: ∀ {m} {w} {w'},
-    matching m = some w → matching m = some w' → w = w' := by
-  intro m w w' mw mw'
-  rw [mw] at mw'
-  simp at mw'
-  exact mw'
 
 @[simps]
 def emptyMatching: Matching M W := {
