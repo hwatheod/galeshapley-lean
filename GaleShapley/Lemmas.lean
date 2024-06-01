@@ -350,97 +350,70 @@ lemma proposeIndexInequality' (state: GaleShapleyState M W) (m: M) (w: W)
   apply this
   clear this
   intro s hs ih
-  constructor
-  · intro m_proposed_w
-    obtain ⟨t, ht, nd, t_ne_s, t_before_s, m_proposed_w⟩ := m_proposed_w
-    have ih_t := ih t ht t_ne_s.symm t_before_s
-    have t_le_s: t.proposeIndex m ≤ s.proposeIndex m := by
-      apply proposeIndexMononicity
-      exact t_before_s
-    have s_pred := iterate_predecessor hs
-    by_cases h: s = initialState mPref wPref
-    · rw [h] at t_ne_s t_before_s
-      have := iterateAntisymmetry
-          (iterateReflexivity galeShapleyTerminator (initialState mPref wPref)) ht
-          ht t_before_s
-      exact False.elim (t_ne_s this.symm)
-    · specialize s_pred h
-      obtain ⟨s_pred, ⟨h_s_pred, s_pred_is_pred⟩, _⟩ := s_pred
-      by_cases h2: proposedAtState (nextStateSomeIsNotDone s_pred_is_pred) m w
-      · have := proposeIndex_nextState s_pred_is_pred m
-        unfold proposedAtState at h2
-        obtain ⟨m_proposed, w_proposee⟩ := h2
-        simp [m_proposed] at this
-        rw [← m_proposed] at this
-        rw [this]
-        unfold proposee at w_proposee
-        simp_rw [← m_proposed] at w_proposee
-        simp [(pref_invariant' (initialState mPref wPref) s_pred h_s_pred).1] at w_proposee
-        rw [Equiv.apply_eq_iff_eq_symm_apply] at w_proposee
-        rw [← w_proposee]
-        simp
-      · have t_ne_s_pred: t ≠ s_pred := by
-          by_contra bad
-          simp_rw [bad] at m_proposed_w  -- changes the type of nd from notDone t to notDone s_pred
-          exact h2 m_proposed_w
-        have t_before_s_pred: s_pred ∈ galeShapleyIterate t := by
-          apply iterate_ne_s_le_s_pred (state := initialState mPref wPref) (s := s) <;> simpa
-        specialize ih s_pred h_s_pred (iterate_ne_predecessor s_pred_is_pred)
-          (iterateNextState s_pred_is_pred)
-        have := ih.mp ?_
-        · have := proposeIndexIsMonotonic_nextState s_pred_is_pred m
-          omega
-        · use t
-          use ht
-          use nd
-  · intro propose_ineq
-    have s_pred := iterate_predecessor hs
-    by_cases h: s = initialState mPref wPref
-    · rw [h] at propose_ineq
-      simp at propose_ineq
-    · specialize s_pred h
-      obtain ⟨s_pred, ⟨h_s_pred, s_pred_is_pred⟩, _⟩ := s_pred
+  by_cases h: s = initialState mPref wPref
+  · simp [h]
+    intros t ht t_ne_s t_before_s
+    have := iterateAntisymmetry
+        (iterateReflexivity galeShapleyTerminator (initialState mPref wPref)) ht
+        ht t_before_s
+    exact False.elim (t_ne_s this.symm)
+  · have s_pred := iterate_predecessor hs h
+    obtain ⟨s_pred, ⟨h_s_pred, s_pred_is_pred⟩, _⟩ := s_pred
+    specialize ih s_pred h_s_pred (iterate_ne_predecessor s_pred_is_pred) (iterateNextState s_pred_is_pred)
+    by_cases h2: ((mPref m).symm w) < s_pred.proposeIndex m
+    · simp only [h2, iff_true] at ih
+      have: ((mPref m).symm w) < s.proposeIndex m := by
+        have := proposeIndexIsMonotonic_nextState s_pred_is_pred m
+        omega
+      simp only [this, iff_true]
+      obtain ⟨t, ht, nd, _, t_before_s_pred, m_proposed_w_earlier⟩ := ih
+      exists t, ht, nd
+      simp [m_proposed_w_earlier]
+      have := iterateNextState s_pred_is_pred
+      constructor
+      · by_contra bad
+        rw [bad] at t_before_s_pred
+        apply global_decreasing at t_before_s_pred
+        apply global_decreasing at this
+        have := galeShapleyTerminator.decreasing s_pred
+        simp_rw [s_pred_is_pred] at this
+        simp only [Option.isSome_some, Option.get_some, true_implies] at this
+        omega
+      · apply iterateTransitivity
+        exact t_before_s_pred
+        exact this
+    · simp only [h2, iff_false, not_exists, not_and] at ih
       have := proposeIndex_nextState s_pred_is_pred m
-      by_cases h3: ↑((mPref m).symm w) < s_pred.proposeIndex m
-      · have := iterateNextState (step := galeShapleyTerminator) s_pred_is_pred
-        specialize ih s_pred h_s_pred (iterate_ne_predecessor s_pred_is_pred) this
-        simp [h3] at ih
-        obtain ⟨t, ht, _, t_before_s_pred, nd, m_proposed_w⟩ := ih
-        use t
-        use ht
-        use nd
+      by_cases h3: proposedAtState (nextStateSomeIsNotDone s_pred_is_pred) m w
+      · have m_proposed_w := h3
+        unfold proposedAtState at h3
+        obtain ⟨m_proposer, w_proposee⟩ := h3
+        simp [proposee, ← m_proposer,
+          (pref_invariant' (initialState mPref wPref) s_pred h_s_pred).1] at w_proposee
+        simp [← m_proposer] at this
+        rw [Equiv.apply_eq_iff_eq_symm_apply] at w_proposee
+        simp only [← w_proposee, this, lt_add_iff_pos_right, zero_lt_one, iff_true]
+        exists s_pred, h_s_pred, nextStateSomeIsNotDone s_pred_is_pred
+        exact ⟨(iterate_ne_predecessor s_pred_is_pred).symm,
+                iterateNextState s_pred_is_pred, m_proposed_w⟩
+      · rw [this]
         constructor
-        · by_contra bad
-          rw [bad] at t_before_s_pred
-          apply global_decreasing at t_before_s_pred
-          apply global_decreasing at this
-          have := galeShapleyTerminator.decreasing s_pred
-          simp_rw [s_pred_is_pred] at this
-          simp only [Option.isSome_some, Option.get_some, true_implies] at this
-          omega
-        · constructor
-          · apply iterateTransitivity
-            exact t_before_s_pred
-            exact this
-          · exact m_proposed_w
-      · split_ifs at this with h2
-        · have: ↑((mPref m).symm w) = s_pred.proposeIndex m := by omega
-          use s_pred
-          use h_s_pred
-          use (nextStateSomeIsNotDone s_pred_is_pred)
-          constructor
-          · exact (iterate_ne_predecessor s_pred_is_pred).symm
-          · constructor
-            · exact iterateNextState s_pred_is_pred
-            · unfold proposedAtState
-              simp [h2]
-              unfold proposee
-              simp_rw [← h2]
-              rw [Equiv.apply_eq_iff_eq_symm_apply]
-              simp [(pref_invariant' (initialState mPref wPref) s_pred h_s_pred).1]
-              simp_rw [← this]
-        · rw [this] at propose_ineq
-          exact False.elim (h3 propose_ineq)
+        · intro m_proposed_w_earlier
+          obtain ⟨t, ht, nd, t_ne_s, t_before_s, m_proposed_w_earlier⟩ := m_proposed_w_earlier
+          have t_ne_s_pred: t ≠ s_pred := by
+            by_contra bad
+            simp_rw [bad] at m_proposed_w_earlier -- changes the type of nd from notDone t to notDone s_pred
+            exact h3 m_proposed_w_earlier
+          specialize ih t ht nd t_ne_s_pred
+            (iterate_ne_s_le_s_pred ht h_s_pred t_ne_s s_pred_is_pred t_before_s)
+          exact False.elim (ih m_proposed_w_earlier)
+        · split_ifs <;> tauto
+          case _ m_proposer =>
+          intro propose_ineq
+          have: (mPref m).symm w = s_pred.proposeIndex m := by omega
+          unfold proposedAtState at h3
+          simp [← m_proposer, proposee,
+            (pref_invariant' (initialState mPref wPref) s_pred h_s_pred).1, ← this] at h3
 
 lemma proposeIndexInequality (m: M) (w: W):
     proposed mPref wPref m w ↔
