@@ -399,9 +399,8 @@ lemma iterate_next_state {state: GaleShapleyState M W} (nextStep: galeShapleyNex
 
 -- global invariance of mPref and wPref
 
-lemma pref_invariant': ∀ state: (GaleShapleyState M W),
-    ∀ s ∈ (galeShapleyIterate state), s.mPref = state.mPref ∧ s.wPref = state.wPref := by
-  intro state
+lemma pref_invariant' {state: GaleShapleyState M W}:
+    ∀ {{s}}, s ∈ galeShapleyIterate state → s.mPref = state.mPref ∧ s.wPref = state.wPref := by
   induction state using (iterate.induct galeShapleyTerminator) with
   | case1 state noneStep =>
       have single_state := iterate_single_state noneStep
@@ -417,7 +416,7 @@ lemma pref_invariant': ∀ state: (GaleShapleyState M W),
 
 lemma pref_invariant: (galeShapleyFinalState mPref wPref).mPref = mPref ∧
    (galeShapleyFinalState mPref wPref).wPref = wPref := by
-  apply pref_invariant' (initialState mPref wPref)
+  apply pref_invariant' (state := initialState mPref wPref)
   simp only [galeShapleyFinalState, galeShapleyList]
   apply List.getLast_mem
 

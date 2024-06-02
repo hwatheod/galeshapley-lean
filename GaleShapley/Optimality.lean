@@ -76,7 +76,7 @@ lemma neverRejectedByPossibleMatch' (state: GaleShapleyState M W) (m: M) (w: W):
         exact ⟨m'_proposed, w_proposee⟩
       · tauto
     have w_prefers_m': (wPref w).symm m' < (wPref w).symm m := by
-      simp [newMatch, (pref_invariant' _ rejection_state h_rjs).2, w_proposee] at m'_rfl
+      simp [newMatch, (pref_invariant' h_rjs).2, w_proposee] at m'_rfl
       split at m_rejectee
       · case _ m'_curMatch =>
         simp at m_rejectee

@@ -385,7 +385,7 @@ lemma proposeIndexInequality' (state: GaleShapleyState M W) (m: M) (w: W)
         unfold proposedAtState at h3
         obtain ⟨m_proposer, w_proposee⟩ := h3
         simp [proposee, ← m_proposer,
-          (pref_invariant' (initialState mPref wPref) s_pred h_s_pred).1] at w_proposee
+          (pref_invariant' h_s_pred).1] at w_proposee
         simp [← m_proposer] at this
         rw [Equiv.apply_eq_iff_eq_symm_apply] at w_proposee
         simp only [← w_proposee, this, lt_add_iff_pos_right, zero_lt_one, iff_true]
@@ -409,7 +409,7 @@ lemma proposeIndexInequality' (state: GaleShapleyState M W) (m: M) (w: W)
           have: (mPref m).symm w = s_pred.proposeIndex m := by omega
           unfold proposedAtState at h3
           simp [← m_proposer, proposee,
-            (pref_invariant' (initialState mPref wPref) s_pred h_s_pred).1, ← this] at h3
+            (pref_invariant' h_s_pred).1, ← this] at h3
 
 lemma proposeIndexInequality (m: M) (w: W):
     proposed mPref wPref m w ↔
@@ -560,8 +560,7 @@ lemma unchangedPartnerDidntIncreaseProposeIndex {m: M} {w: W}
       rw [← ((galeShapleyIterate state).getLast (galeShapleyIterateNonEmpty _)).matchedLastProposed m w
         finalPartner] at this
       simp at this
-      rw [(pref_invariant' state ((galeShapleyIterate state).getLast (galeShapleyIterateNonEmpty _))
-        (List.getLast_mem (galeShapleyIterateNonEmpty state))).1] at this
+      rw [(pref_invariant' (List.getLast_mem (galeShapleyIterateNonEmpty state))).1] at this
       omega
     · specialize ih m_still_w
       rw [← ih]
@@ -577,8 +576,7 @@ lemma rejectedEndsUpWithWorse {m: M} {w w': W}
   have origProposeIndex := state.matchedLastProposed m w originalPartner
   have finalProposeIndex := ((galeShapleyIterate state).getLast (galeShapleyIterateNonEmpty _)).matchedLastProposed
      m w' finalPartner
-  rw [(pref_invariant' state ((galeShapleyIterate state).getLast (galeShapleyIterateNonEmpty _))
-    (List.getLast_mem (galeShapleyIterateNonEmpty _))).1] at finalProposeIndex
+  rw [(pref_invariant' (List.getLast_mem (galeShapleyIterateNonEmpty _))).1] at finalProposeIndex
   suffices state.proposeIndex m < ((galeShapleyIterate state).getLast (galeShapleyIterateNonEmpty _)).proposeIndex m by omega
 
   induction state using (iterate.induct galeShapleyTerminator) with
@@ -692,7 +690,7 @@ lemma matchedImpliesProposedEarlier {state: GaleShapleyState M W}
     ∃ s ∈ galeShapleyList mPref wPref, ∃ (nd_s: notDone s),
       s ≠ state ∧ state ∈ galeShapleyIterate s ∧ proposedAtState nd_s m w := by
   have := state.matchedLastProposed m w matched
-  simp [(pref_invariant' (initialState mPref wPref) state h_state).1] at this
+  simp [(pref_invariant' h_state).1] at this
   have: (mPref m).symm w < state.proposeIndex m := by omega
   rw [← proposeIndexInequality'] at this <;> try assumption
 
@@ -751,7 +749,7 @@ lemma rejectedByPreferred {state: GaleShapleyState M W}
             nextStateSomeIsNotDone s_pred_is_pred, ?_⟩
           have w'_proposee: proposee (nextStateSomeIsNotDone s_pred_is_pred) = w' := by
             unfold proposee
-            simp [← m_proposed, this, (pref_invariant' (initialState mPref wPref) s_pred h_s_pred).1]
+            simp [← m_proposed, this, (pref_invariant' h_s_pred).1]
           have := proposerRemainsSingleImpliesRejected s_pred_is_pred m_proposed h3
           unfold rejectedAtState
           tauto
@@ -767,14 +765,14 @@ lemma rejectedByPreferred {state: GaleShapleyState M W}
         split_ifs at this; try contradiction
         case _ m_eq_newMatch =>
         have := s.matchedLastProposed m w h3
-        simp [(pref_invariant' (initialState mPref wPref) s hs).1] at this
+        simp [(pref_invariant' hs).1] at this
         simp [← m_proposed] at s_proposeIndex
         omega
     · rcases h3: s.matching m with _ | w2 <;> simp [h2, h3] at m_prefers_w' h
       · have m_no_propose := didNotPropose (nextStateSomeIsNotDone s_pred_is_pred) (by rw [h2]; simp)
         simp [m_no_propose] at s_proposeIndex
         have := s_pred.matchedLastProposed m w h2
-        simp [(pref_invariant' (initialState mPref wPref) s_pred h_s_pred).1] at this
+        simp [(pref_invariant' h_s_pred).1] at this
         have: w' = w := by
           have: (mPref m).symm w' = (mPref m).symm w := by omega
           exact Equiv.injective (mPref m).symm this
@@ -823,7 +821,7 @@ lemma proposedImpliesRejectedByPreferred {state: GaleShapleyState M W} {w: W} (n
   have := choose_spec nd
   simp_rw [← m_proposer] at this w_proposee
   have := singleImpliesRejectedByPreferred mPref wPref h_state this.1
-  simp [(pref_invariant' (initialState mPref wPref) state h_state).1] at w_proposee
+  simp [(pref_invariant' h_state).1] at w_proposee
   rw [Equiv.apply_eq_iff_eq_symm_apply] at w_proposee
   apply_fun (fun x => x.val) at w_proposee
   simp at w_proposee

@@ -333,8 +333,7 @@ theorem hwangTheorem (matching: Matching M W) (existsRevendicateur: ∃ m, reven
 
     have pref_inv: last_rev_proposal.mPref = mPref ∧
         last_rev_proposal.wPref = wPref := by
-      apply pref_invariant' (initialState mPref wPref)
-      exact h_lrp
+      exact pref_invariant' h_lrp
 
     -- this wasn't the last step of the algorithm
     have notLast: notDone last_rev_proposal := by
