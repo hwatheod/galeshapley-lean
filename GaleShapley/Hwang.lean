@@ -636,7 +636,7 @@ lemma unstablePairLemma (mPref': Pref M W) (wPref': Pref W M)
 /- A result from Dubins-Freedman, as stated in Dumont Theorem 2.3. We have generalized the result
    from Dumont to allow more than one liar from M.
 
-   Let P is a set of preferences and P' be a set of preferences which differs from P by modifying
+   Let P be a set of preferences and P' be a set of preferences which differs from P by modifying
    one or more preferences in `mPref` but keeping `wPref` the same. We call the m in M who have
    modified their preferences `liars`. If the set of liars is non-empty, then at least one liar is a
    non-revendicateur with respect to gs(P').
