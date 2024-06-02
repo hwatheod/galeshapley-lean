@@ -72,9 +72,7 @@ theorem hwangTheorem_case1 (matching: Matching M W) (h: hwang_case1_hypothesis m
   obtain ⟨w, w_revSpouse, m', m'_nonrev, m'_gs_matches_w⟩ := h
   simp [revendicateurSpouses] at w_revSpouse
   obtain ⟨m, m_rev, m_matches_w⟩ := w_revSpouse
-  use m
-  use m'
-  use w
+  exists m, m', w
   simp [m_matches_w, m_rev, m'_nonrev]
   have m_ne_m': m ≠ m' := by
     by_contra bad
@@ -83,26 +81,13 @@ theorem hwangTheorem_case1 (matching: Matching M W) (h: hwang_case1_hypothesis m
   unfold isUnstablePair
   simp [m_matches_w, (inverseProperty matching m w).mp m_matches_w]
   simp [revendicateur] at m'_nonrev m_rev
-  obtain ⟨w', h1, m_rev⟩ := m_rev
-  have: w = w' := by
-    rw [h1] at m_matches_w
-    simp at m_matches_w
-    exact m_matches_w.symm
-  rw [← this] at m_rev
-  clear this h1 w'
+  simp [m_matches_w] at m_rev
   constructor
   · rcases h1: matching m' with _ | w'
     constructor
     · simp
     · simp
-      specialize m'_nonrev w' h1
-      obtain ⟨w'', m'_gs_matches_w'', m'_weak_prefers_w⟩ := m'_nonrev
-      have: w = w'' := by
-        rw [m'_gs_matches_w] at m'_gs_matches_w''
-        simp at m'_gs_matches_w''
-        exact m'_gs_matches_w''
-      rw [← this] at m'_weak_prefers_w
-      clear this m'_gs_matches_w''
+      simp [h1, m'_gs_matches_w] at m'_nonrev
       have w_ne_w': w ≠ w' := by
         by_contra bad
         rw [← bad] at h1
@@ -546,9 +531,7 @@ theorem hwangTheorem (matching: Matching M W) (existsRevendicateur: ∃ m, reven
 
     /- Show that (m, w) is the unstable pair we are looking for. Note that w is the spouse
        in `matching` of the revendicateur r'. -/
-    use r'
-    use m
-    use w
+    exists r', m, w
     refine ⟨r'_matches_w, r'_rev, m_notrev, ?_⟩
 
     unfold isUnstablePair
