@@ -324,6 +324,29 @@ lemma tsm_g_restrict_bijective: Function.Bijective (tsm_g_restrict tsm) := by
   · exact tsm_g_restrict_injective tsm
   · simp [two_sets_eq_cardinality]
 
+lemma tsm_f_restrict_surjective: ∀ w ∈ all_w_prefer_g tsm, ∃ m, m_prefers_f tsm m ∧
+    tsm.f m = some w := by
+  intros w hw
+  have: Function.Surjective (tsm_f_restrict tsm) :=
+    Function.Bijective.surjective (tsm_f_restrict_bijective tsm)
+  unfold Function.Surjective at this
+  specialize this ⟨w, hw⟩
+  obtain ⟨m, hm⟩ := this
+  simp [tsm_f_restrict] at hm
+  generalize_proofs p at hm
+  have := Option.eq_some_iff_get_eq.mpr ⟨p, hm⟩
+  use m
+  simp [this]
+  have := Subtype.prop m
+  simp [all_m_prefer_f] at this
+  exact this
+
+lemma tsm_g_restrict_surjective: ∀ m ∈ all_m_prefer_f tsm, ∃ w, w_prefers_g tsm w ∧
+    inverseMatching tsm.g w = some m := by
+  have := tsm_f_restrict_surjective (mw (fg tsm))
+  simp at this
+  exact this
+
 /- This is the converse of asymmetric_preference_f and is much harder to prove. It depends
    on finiteness and needs the tsm_f_restrict function defined above. It is the
    other direction of the first theorem in Dumont section 1.3.
@@ -342,27 +365,13 @@ lemma asymmetric_preference_f' {m: M} {w: W} (hf: tsm.f m = some w):
     exact lt_irrefl _ w_g
   ) at m_g
 
-  have: Function.Surjective (tsm_f_restrict tsm) :=
-    Function.Bijective.surjective (tsm_f_restrict_bijective tsm)
-
-  unfold Function.Surjective at this
-  specialize this ⟨w, (by
+  have := tsm_f_restrict_surjective tsm w (by
     unfold all_w_prefer_g
     simp [all_m_prefer_f]
     exact w_g
-  )⟩
-
-  obtain ⟨m', m'_f_matches_w⟩ := this
-  have m_f := Subtype.prop m'
-  unfold all_m_prefer_f at m_f
-  simp at m_f
-
-  unfold tsm_f_restrict at m'_f_matches_w
-  simp at m'_f_matches_w
-  generalize_proofs p at m'_f_matches_w
-  have := Option.eq_some_iff_get_eq.mpr ⟨p, m'_f_matches_w⟩
-  have := matchingCondition' hf this
-
+  )
+  obtain ⟨m', m_f, m'_f_matches_w⟩ := this
+  have := matchingCondition' hf m'_f_matches_w
   rw [← this] at m_f
   exact m_cannot_prefer_f_and_g tsm m_f m_g
 
@@ -390,17 +399,10 @@ def sameSinglesM (m: M): tsm.f m = none ↔ tsm.g m = none := by
     use w
     simp [m_f_matches_w, m_g_unmatched]
 
-  have: Function.Surjective (tsm_g_restrict tsm) :=
-    Function.Bijective.surjective (tsm_g_restrict_bijective tsm)
-  unfold Function.Surjective at this
-  specialize this ⟨m, (by unfold all_m_prefer_f; simp [m_f])⟩
-  obtain ⟨w, m_g_matches_w⟩ := this
-  unfold tsm_g_restrict mw fg tsm_f_restrict at m_g_matches_w
-  simp at m_g_matches_w
-  generalize_proofs p1 p2 p3 at m_g_matches_w
-  have := Option.eq_some_iff_get_eq.mpr ⟨p3, m_g_matches_w⟩
-  rw [← inverseProperty tsm.g _ _] at this
-  rw [this] at m_g_unmatched
+  have := tsm_g_restrict_surjective tsm m (by unfold all_m_prefer_f; simp [m_f])
+  obtain ⟨w', _, m_g_matches_w'⟩ := this
+  rw [← inverseProperty tsm.g _ _] at m_g_matches_w'
+  rw [m_g_matches_w'] at m_g_unmatched
   contradiction
 
 def sameSinglesW (w: W): (inverseMatching tsm.f) w = none ↔ (inverseMatching tsm.g) w = none :=
