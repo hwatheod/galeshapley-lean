@@ -529,9 +529,7 @@ lemma changedPartnerIncreaseProposeIndex
           omega
         · have := becameMatchedIncreasesProposerIndex nextStep h (Option.ne_none_iff_exists'.mpr ⟨w'', h2⟩)
           omega
-      · rw [h] at m_not_matches_w
-        simp at m_not_matches_w
-
+      · simp [h] at m_not_matches_w
         have sameOrSingle := matchedEitherSameOrSingleNext nextStep h
         rcases sameOrSingle with m_single_next | m_still_w'
         · specialize ih_strict (by rw [m_single_next]; tauto)
@@ -588,17 +586,14 @@ lemma rejectedEndsUpWithWorse {m: M} {w w': W}
       simp at noneStep
       rw [noneStep] at nextStateSome
       contradiction
-    | case2 state nextState nextStep ih =>
+    | case2 state nextState nextStep _ =>
       simp at nextStep
-      rw [nextStep] at nextStateSome
-      simp at nextStateSome
-      rw [← nextStateSome] at w_rejects_m ih
-      simp [mPref_invariant_nextState nextStep, wPref_invariant_nextState nextStep] at ih
-
+      simp [nextStep] at nextStateSome
+      rw [← nextStateSome] at w_rejects_m
       have := changedPartnerIncreaseProposeIndex nextState m
       simp [iterate_next_state nextStep] at finalPartner ⊢
       rw [List.getLast_cons (galeShapleyIterateNonEmpty _)] at finalPartner ⊢
-      rw [← nextStateLastIsSame nextStep] at this ih finalPartner ⊢
+      rw [← nextStateLastIsSame nextStep] at this finalPartner ⊢
       specialize this w'
       obtain ⟨_, this⟩ := this
       simp [w_rejects_m, finalPartner] at this
@@ -746,9 +741,8 @@ lemma rejectedByPreferred {state: GaleShapleyState M W}
       omega
   · clear ih -- since it's no longer applicable
     rcases h2: s_pred.matching m with _ | w
-    · rcases h3: s.matching m with _ | w
-      · simp [h2, h3] at m_prefers_w' h
-        split_ifs at s_proposeIndex
+    · rcases h3: s.matching m with _ | w <;> simp [h2, h3] at m_prefers_w' h
+      · split_ifs at s_proposeIndex
         · case _ m_proposed =>
           rw [s_proposeIndex] at m_prefers_w'
           have: s_pred.proposeIndex m = ↑((mPref m).symm w') := by omega
@@ -764,8 +758,7 @@ lemma rejectedByPreferred {state: GaleShapleyState M W}
         · case _ m_not_proposed =>
           rw [s_proposeIndex] at m_prefers_w'
           omega
-      · simp [h2, h3] at m_prefers_w' h
-        have m_proposed := becameMatchedIsProposer (nextStateSomeIsNotDone s_pred_is_pred)
+      · have m_proposed := becameMatchedIsProposer (nextStateSomeIsNotDone s_pred_is_pred)
             h2 (by simp at s_pred_is_pred; simp [s_pred_is_pred, h3])
         have w_proposee := becameMatchedProposedTo (w := w) (nextStateSomeIsNotDone s_pred_is_pred)
             h2 (by simp at s_pred_is_pred; simp [s_pred_is_pred, h3])
@@ -777,9 +770,8 @@ lemma rejectedByPreferred {state: GaleShapleyState M W}
         simp [(pref_invariant' (initialState mPref wPref) s hs).1] at this
         simp [← m_proposed] at s_proposeIndex
         omega
-    · rcases h3: s.matching m with _ | w2
-      · simp [h2, h3] at m_prefers_w' h
-        have m_no_propose := didNotPropose (nextStateSomeIsNotDone s_pred_is_pred) (by rw [h2]; simp)
+    · rcases h3: s.matching m with _ | w2 <;> simp [h2, h3] at m_prefers_w' h
+      · have m_no_propose := didNotPropose (nextStateSomeIsNotDone s_pred_is_pred) (by rw [h2]; simp)
         simp [m_no_propose] at s_proposeIndex
         have := s_pred.matchedLastProposed m w h2
         simp [(pref_invariant' (initialState mPref wPref) s_pred h_s_pred).1] at this
@@ -798,8 +790,7 @@ lemma rejectedByPreferred {state: GaleShapleyState M W}
         rw [h2] at this
         simp at this
         tauto
-      · simp [h2, h3] at m_prefers_w' h
-        have := matchedEitherSameOrSingleNext s_pred_is_pred h2
+      · have := matchedEitherSameOrSingleNext s_pred_is_pred h2
         simp [h3] at this
         rw [this] at m_prefers_w'
         omega
