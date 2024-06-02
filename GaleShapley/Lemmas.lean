@@ -232,18 +232,14 @@ lemma matchedEitherSameOrSingleNext' {state: GaleShapleyState M W}
       ((galeShapleyNextStep state).get (notDoneIsSome h)).matching m = some w := by
   have := choose_spec h
   have mDidNotPropose := didNotPropose h (by rw [m_matched_before]; simp)
-  have := matching_nextState' h m
-  by_cases h2: proposee h = w
-  · simp [h2, m_matched_before] at this
-    split_ifs at this <;> tauto
-  · simp [h2, m_matched_before] at this
-    split_ifs at this <;> try tauto
-    case _ _ c1 _ =>
-      simp [mDidNotPropose] at c1
-      have := curMatch_lemma h c1
-      rw [m_matched_before] at this
-      simp at this
-      exact False.elim (h2 this.symm)
+  have nextState := matching_nextState' h m
+  simp [m_matched_before] at nextState
+  split_ifs at nextState <;> tauto
+  case _ _ m_eq_curMatch m_eq_newMatch =>
+  simp [mDidNotPropose] at m_eq_curMatch
+  have := curMatch_lemma h m_eq_curMatch
+  rw [← this, m_matched_before] at nextState
+  tauto
 
 lemma matchedEitherSameOrSingleNext {state: GaleShapleyState M W}
     (nextStateSome: galeShapleyNextStep state = some nextState)
