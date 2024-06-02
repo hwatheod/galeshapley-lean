@@ -41,7 +41,7 @@ def revendicateurSpouses (matching: Matching M W): Finset W :=
 
 /- The first paragraph of the proof in Dumont. -/
 lemma revSpousesMarriedInGs (matching: Matching M W):
-    ∀ (w: revendicateurSpouses mPref wPref matching), inverseMatching (galeShapley mPref wPref) w ≠ none := by
+    ∀ (w: revendicateurSpouses mPref wPref matching), (galeShapley mPref wPref)⁻¹ w ≠ none := by
   intro w
   by_contra bad
   have := Subtype.prop w

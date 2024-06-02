@@ -19,7 +19,7 @@ structure GaleShapleyState (M W: Type) [Fintype M] [Fintype W] [DecidableEq M] [
     ∀ m, ∀ w, matching m = some w → (mPref m).symm w < proposeIndex m
   noWorseThanProposedTo:
     ∀ m, ∀ w, (mPref m).symm w < proposeIndex m →     -- m proposed to w
-      ∃ m', (inverseMatching matching w) = some m' ∧  -- m' is paired with w
+      ∃ m', matching⁻¹ w = some m' ∧  -- m' is paired with w
         (wPref w).symm m' <= (wPref w).symm m
 
 def galeShapleyNextStep (state: GaleShapleyState M W): Option (GaleShapleyState M W) :=
@@ -85,7 +85,7 @@ def galeShapleyNextStep (state: GaleShapleyState M W): Option (GaleShapleyState 
         simp only [Option.some.injEq] at this2
         exact this2
     }
-    let newMatching := inverseMatching acceptedProposals
+    let newMatching := acceptedProposals⁻¹
     let newProposeIndex := fun m =>
       let curProposeIndex := state.proposeIndex m
       if newProposals m = none then curProposeIndex else curProposeIndex + 1
@@ -146,7 +146,7 @@ def galeShapleyNextStep (state: GaleShapleyState M W): Option (GaleShapleyState 
         exact m'_proposed_w
     have newNoWorseThanProposedTo:
       ∀ m, ∀ w, (state.mPref m).symm w < newProposeIndex m →     -- m proposed to w
-        ∃ m', (inverseMatching newMatching w) = some m' ∧  -- m' is paired with w
+        ∃ m', newMatching⁻¹ w = some m' ∧  -- m' is paired with w
           (state.wPref w).symm m' <= (state.wPref w).symm m := by
       intros m w lt_newProposeIndex
       simp [newMatching]
@@ -347,10 +347,8 @@ lemma unmatchedExhaustedProposals: ∀ m, galeShapley mPref wPref m = none →
 
 @[reducible]
 def isUnstablePair (matching: Matching M W) (m: M) (w: W): Prop :=
-  let invMatching := inverseMatching matching
   (matching m = none ∨ (mPref m).symm w < (mPref m).symm (Option.getD (matching m) w)) ∧
-  (invMatching w = none ∨ (wPref w).symm m < (wPref w).symm (Option.getD (invMatching w) m))
-
+  (matching⁻¹ w = none ∨ (wPref w).symm m < (wPref w).symm (Option.getD (matching⁻¹ w) m))
 
 @[reducible]
 def isStableMatching (matching: Matching M W): Prop :=

@@ -7,6 +7,8 @@ import Mathlib.Data.Set.Finite
   We define partial matchings from `M` to `W` as functions `f: M → Option W` which
   are injective when restricted to the defined subset where `f(m) ≠ none`.
 
+  We define the inverse matching of a matching, and introduce the notation ⁻¹ for it.
+
 -/
 variable {M W: Type} [Fintype M] [Fintype W]
 
@@ -119,15 +121,17 @@ def inverseMatching (matching: Matching W M): Matching M W := {
     exact h2
 }
 
-/- Two theorems stating that `inverseMatching` has the right property. There are
+postfix:max "⁻¹" => inverseMatching
+
+/- Two theorems stating that `⁻¹` has the right property. There are
    two cases depending on whether the inverse matching is defined at `w` or not.
 -/
 theorem inverseProperty {matching: Matching M W} {m: M} {w: W}:
-    matching m = some w ↔ (inverseMatching matching) w = (some m) := by
+    matching m = some w ↔ matching⁻¹ w = some m := by
   exact inverseProperty' matching m w
 
 theorem inversePropertyNone (matching: Matching M W):
-    ∀ w, (∀ m, matching m ≠ some w) ↔ (inverseMatching matching) w = none := by
+    ∀ w, (∀ m, matching m ≠ some w) ↔ matching⁻¹ w = none := by
   intro w
   constructor
   · intros w_matches_none
@@ -147,8 +151,7 @@ theorem inversePropertyNone (matching: Matching M W):
 
 /- The inverse of inverse is equal to the original matching. -/
 @[simp]
-theorem inverseInvolution (matching: Matching M W):
-    inverseMatching (inverseMatching matching) = matching := by
+theorem inverseInvolution (matching: Matching M W): matching⁻¹⁻¹ = matching := by
   apply matching_coe_injective
   apply funext
   intro m

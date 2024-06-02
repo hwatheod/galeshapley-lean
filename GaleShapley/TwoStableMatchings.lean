@@ -55,7 +55,7 @@ def isUnstablePair' (mPref: Pref M W) (wPref: Pref W M)
     (matching: Matching M W) (m: M) (w: W): Prop :=
   let _ := m_order mPref m
   let _ := m_order wPref w
-  some w > matching m ∧ some m > (inverseMatching matching) w
+  some w > matching m ∧ some m > matching⁻¹ w
 
 lemma isUnstableEquiv (mPref: Pref M W) (wPref: Pref W M)
     (matching: Matching M W) (m: M) (w: W):
@@ -71,13 +71,13 @@ lemma isUnstableEquiv (mPref: Pref M W) (wPref: Pref W M)
   constructor
   · rcases matching m with _ | w'
     · simp
-      rcases (inverseMatching matching) w with _ | m'
+      rcases matching⁻¹ w with _ | m'
       · tauto
       · rw [WithBot.some_lt_some]
         simp [m_order'_lt_def]
         tauto
     · simp only [Option.getD_some, false_or]
-      rcases (inverseMatching matching) w with _ | m'
+      rcases matching⁻¹ w with _ | m'
       · rw [WithBot.some_lt_some]
         simp [m_order'_lt_def]
         tauto
@@ -86,13 +86,13 @@ lemma isUnstableEquiv (mPref: Pref M W) (wPref: Pref W M)
         simp [m_order'_lt_def]
   · rcases h: matching m with _ | w'
     · simp
-      rcases (inverseMatching matching) w with _ | m'
+      rcases matching⁻¹ w with _ | m'
       · simp
       . simp
         rw [WithBot.some_lt_some]
         simp [m_order'_lt_def]
     · simp only [Option.getD_some, false_or, h]
-      rcases (inverseMatching matching) w with _ | m'
+      rcases matching⁻¹ w with _ | m'
       · rw [WithBot.some_lt_some]
         simp [m_order'_lt_def]
         tauto
@@ -102,7 +102,7 @@ lemma isUnstableEquiv (mPref: Pref M W) (wPref: Pref W M)
 
 /- The inverse of a stable matching is stable. -/
 lemma stableSymmetry {f: Matching M W} (f_stable: isStableMatching mPref wPref f):
-    isStableMatching wPref mPref (inverseMatching f) := by
+    isStableMatching wPref mPref f⁻¹ := by
   unfold isStableMatching at f_stable ⊢
   simp [isUnstableEquiv] at f_stable ⊢
   intros w m
@@ -118,8 +118,8 @@ variable (tsm: TwoStableMatchings M W)
 def mw (tsm: TwoStableMatchings M W): TwoStableMatchings W M := {
   mPref := tsm.wPref
   wPref := tsm.mPref
-  f := inverseMatching tsm.f
-  g := inverseMatching tsm.g
+  f := tsm.f⁻¹
+  g := tsm.g⁻¹
   f_stable := stableSymmetry tsm.f_stable
   g_stable := stableSymmetry tsm.g_stable
 }
@@ -173,7 +173,7 @@ lemma m_prefers_f_or_g {m: M} (ne: tsm.f m ≠ tsm.g m):
   have: tsm.g m = tsm.f m := le_antisymm not_mg not_mf
   exact ne.symm this
 
-lemma w_prefers_f_or_g {w: W} (ne: inverseMatching tsm.f w ≠ inverseMatching tsm.g w):
+lemma w_prefers_f_or_g {w: W} (ne: tsm.f⁻¹ w ≠ tsm.g⁻¹ w):
     w_prefers_f tsm w ∨ w_prefers_g tsm w :=
   m_prefers_f_or_g (mw tsm) ne
 
@@ -194,11 +194,11 @@ lemma m_cannot_prefer_f_and_g {m: M} (mf: m_prefers_f tsm m) (mg: m_prefers_g ts
 lemma w_cannot_prefer_f_and_g {w: W} (wf: w_prefers_f tsm w) (wg: w_prefers_g tsm w): False :=
   m_cannot_prefer_f_and_g (mw tsm) wf wg
 
-lemma w_prefers_not_f {w: W} (ne: inverseMatching tsm.f w ≠ inverseMatching tsm.g w):
+lemma w_prefers_not_f {w: W} (ne: tsm.f⁻¹ w ≠ tsm.g⁻¹ w):
     ¬ w_prefers_f tsm w → w_prefers_g tsm w :=
   m_prefers_not_f (mw tsm) ne
 
-lemma w_prefers_not_g {w: W} (ne: inverseMatching tsm.f w ≠ inverseMatching tsm.g w):
+lemma w_prefers_not_g {w: W} (ne: tsm.f⁻¹ w ≠ tsm.g⁻¹ w):
     ¬ w_prefers_g tsm w → w_prefers_f tsm w :=
   m_prefers_not_g (mw tsm) ne
 
@@ -221,7 +221,7 @@ lemma asymmetric_preference_f {m: M} {w: W} (hf: tsm.f m = some w):
   rw [hf] at m_f
   rw [inverseProperty.mp hf] at bad
   simp [m_f]
-  have: (inverseMatching tsm.g) w ≠ some m := by
+  have: tsm.g⁻¹ w ≠ some m := by
     by_contra bad2
     rw [← inverseProperty] at bad2
     rw [bad2] at m_f
@@ -258,7 +258,7 @@ lemma image_prefer_f_prefer_g {m: M} (h: m ∈ all_m_prefer_f tsm):
     exact asymmetric_preference_f tsm m_f_matches_w h'
 
 lemma image_prefer_g_prefer_f {w: W} (h: w ∈ all_w_prefer_g tsm):
-    ∃ m, (inverseMatching tsm.g) w = some m ∧ m ∈ all_m_prefer_f tsm := by
+    ∃ m, tsm.g⁻¹ w = some m ∧ m ∈ all_m_prefer_f tsm := by
   have := image_prefer_f_prefer_g (mw (fg tsm)) h
   simp at this
   exact this
@@ -342,7 +342,7 @@ lemma tsm_f_restrict_surjective: ∀ w ∈ all_w_prefer_g tsm, ∃ m, m_prefers_
   exact this
 
 lemma tsm_g_restrict_surjective: ∀ m ∈ all_m_prefer_f tsm, ∃ w, w_prefers_g tsm w ∧
-    inverseMatching tsm.g w = some m := by
+    tsm.g⁻¹ w = some m := by
   have := tsm_f_restrict_surjective (mw (fg tsm))
   simp at this
   exact this
@@ -405,7 +405,7 @@ def sameSinglesM (m: M): tsm.f m = none ↔ tsm.g m = none := by
   rw [m_g_matches_w'] at m_g_unmatched
   contradiction
 
-def sameSinglesW (w: W): (inverseMatching tsm.f) w = none ↔ (inverseMatching tsm.g) w = none :=
+def sameSinglesW (w: W): tsm.f⁻¹ w = none ↔ tsm.g⁻¹ w = none :=
   sameSinglesM (mw tsm) w
 
 /- Now we prove several lemmas to establish Conway's result that stable matchings
@@ -538,16 +538,15 @@ lemma supMatching_mg' (m: M): supMatching tsm m = tsm.g m → tsm.f m ≠ tsm.g 
 lemma supMatching_inverse_lemma:
     have := mPref_lattice tsm.mPref
     have := mPref_lattice (M := W) (W := M) tsm.wPref
-    inverseMatching (supMatching tsm) =
-      (inverseMatching tsm.f).matching ⊓ (inverseMatching tsm.g).matching := by
+    (supMatching tsm)⁻¹ = tsm.f⁻¹.matching ⊓ tsm.g⁻¹.matching := by
   apply funext
   intro w
   simp [Pi.inf_def, inf_eq_min]
   let _ := m_order tsm.wPref w
 
-  wlog h2: (inverseMatching tsm.f) w ≤ (inverseMatching tsm.g) w
-  · by_cases h: (inverseMatching tsm.f) w ≠ (inverseMatching tsm.g) w
-    · have gfw: (inverseMatching tsm.g) w ≤ (inverseMatching tsm.f) w := by exact le_of_not_ge h2
+  wlog h2: tsm.f⁻¹ w ≤ tsm.g⁻¹ w
+  · by_cases h: tsm.f⁻¹ w ≠ tsm.g⁻¹ w
+    · have gfw: tsm.g⁻¹ w ≤ tsm.f⁻¹ w := by exact le_of_not_ge h2
       specialize this (fg tsm) w gfw
       simp at this
       rwa [min_comm]
@@ -556,15 +555,15 @@ lemma supMatching_inverse_lemma:
       simp at h2
   simp [min_def, h2]
 
-  by_cases h: (inverseMatching tsm.f) w ≠ (inverseMatching tsm.g) w
+  by_cases h: tsm.f⁻¹ w ≠ tsm.g⁻¹ w
   · have w_g: w_prefers_g tsm w := by
       simp [w_prefers_g, m_prefers_g, mw, m_prefers_f]
       exact lt_of_le_of_ne h2 h
 
-    rcases h3: (inverseMatching tsm.f) w with _ | m
+    rcases h3: tsm.f⁻¹ w with _ | m
     · simp [w_prefers_g, m_prefers_g, mw, m_prefers_f] at w_g
       rw [h3] at w_g
-      have: (inverseMatching tsm.g) w ≠ none := by
+      have: tsm.g⁻¹ w ≠ none := by
         by_contra bad
         rw [bad] at w_g
         exact lt_irrefl _ w_g
@@ -574,7 +573,7 @@ lemma supMatching_inverse_lemma:
       have := supMatching_mf tsm m this
       rwa [h3] at this
   · push_neg at h
-    rcases h3: (inverseMatching tsm.f) w with _ | m
+    rcases h3: tsm.f⁻¹ w with _ | m
     · rw [h3] at h
       symm at h
       rw [← inversePropertyNone] at h h3 ⊢
@@ -628,7 +627,7 @@ lemma infMatchingClosed (tsm: TwoStableMatchings M W):
   have := supMatching_inverse_lemma (mw tsm)
   simp at this
   rw [← this]
-  exact (inverseMatching (supMatching (mw tsm))).matchingCondition
+  exact (supMatching (mw tsm))⁻¹.matchingCondition
 
 def infMatching: Matching M W :=
   let lattice := mPref_lattice tsm.mPref
@@ -644,7 +643,7 @@ def infMatching: Matching M W :=
 lemma infMatching_lemma (tsm: TwoStableMatchings M W):
     let _ := mPref_lattice tsm.mPref
     let _ := mPref_lattice (mw tsm).mPref
-    infMatching tsm = inverseMatching (supMatching (mw tsm)) := by
+    infMatching tsm = (supMatching (mw tsm))⁻¹ := by
   have := supMatching_inverse_lemma (mw tsm)
   simp at this ⊢
   apply_fun (fun x => x.matching)

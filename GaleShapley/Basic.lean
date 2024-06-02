@@ -30,7 +30,7 @@ structure GaleShapleyState (M W: Type) [Fintype M] [Fintype W] where
     ∀ m, ∀ w, matching m = some w → (mPref m).symm w + 1 = proposeIndex m
   noWorseThanProposedTo:
     ∀ m, ∀ w, (mPref m).symm w < proposeIndex m →     -- m proposed to w
-      ∃ m', (inverseMatching matching w) = some m' ∧  -- m' is paired with w
+      ∃ m', matching⁻¹ w = some m' ∧  -- m' is paired with w
         (wPref w).symm m' <= (wPref w).symm m         -- w prefers m' to m
 
 -- at least one proposer is unmatched and has at least one proposal left to make
@@ -61,7 +61,7 @@ def proposedAtState {state: GaleShapleyState M W} (h: notDone state) (m: M) (w: 
 
 -- the current match of the proposee at this state, if any
 def curMatch {state: GaleShapleyState M W} (h: notDone state): Option M :=
-    inverseMatching state.matching (proposee h)
+    state.matching⁻¹ (proposee h)
 
 -- the match of the proposee after the proposal is either accepted or rejected
 def newMatch {state: GaleShapleyState M W} (h: notDone state): M :=
@@ -99,7 +99,7 @@ def galeShapleyNextStep (state: GaleShapleyState M W): Option (GaleShapleyState 
       else if m = w0_newMatch then some w0
       else none
     let invNewMatching' : W → Option M := fun w =>
-      if w ≠ w0 then inverseMatching state.matching w else some w0_newMatch
+      if w ≠ w0 then state.matching⁻¹ w else some w0_newMatch
     let newMatching := createMatching newMatching' invNewMatching' (by
       intros m w
       simp [newMatching', invNewMatching']
@@ -146,7 +146,7 @@ def galeShapleyNextStep (state: GaleShapleyState M W): Option (GaleShapleyState 
       split_ifs <;> tauto
     have newNoWorseThanProposedTo:
         ∀ m, ∀ w, (state.mPref m).symm w < newProposeIndex m →     -- m proposed to w
-          ∃ m', (inverseMatching newMatching w) = some m' ∧  -- m' is paired with w
+          ∃ m', newMatching⁻¹ w = some m' ∧  -- m' is paired with w
             (state.wPref w).symm m' <= (state.wPref w).symm m := by
       intros m w
       by_cases h1: m = m0 ∧ w = w0
@@ -189,7 +189,7 @@ def galeShapleyNextStep (state: GaleShapleyState M W): Option (GaleShapleyState 
             have c2: w0_curMatch ≠ some m' := by
               by_contra bad
               simp [w0_curMatch, curMatch] at bad
-              rcases h3: ((inverseMatching state.matching) w0) with _ | m''
+              rcases h3: (state.matching⁻¹ w0) with _ | m''
               · simp [w0_curMatch, curMatch, h3] at bad
               · simp [w0_curMatch, curMatch, h3] at bad
                 have := inverseProperty.mpr h3
@@ -455,10 +455,8 @@ lemma unmatchedExhaustedProposals: ∀ m, galeShapley mPref wPref m = none →
   exact this
 
 def isUnstablePair (matching: Matching M W) (m: M) (w: W): Prop :=
-  let invMatching := inverseMatching matching
   (matching m = none ∨ (mPref m).symm w < (mPref m).symm (Option.getD (matching m) w)) ∧
-  (invMatching w = none ∨ (wPref w).symm m < (wPref w).symm (Option.getD (invMatching w) m))
-
+  (matching⁻¹ w = none ∨ (wPref w).symm m < (wPref w).symm (Option.getD (matching⁻¹ w) m))
 
 def isStableMatching (matching: Matching M W): Prop :=
   ∀ m, ∀ w, ¬ (isUnstablePair mPref wPref matching m w)

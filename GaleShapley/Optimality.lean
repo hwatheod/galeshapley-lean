@@ -217,12 +217,12 @@ theorem proposerOptimal (matching: Matching M W) (stable: isStableMatching mPref
     · exact neverRejectedFuture never_rejected_by_w s hs
 
 theorem receiverPessimal (matching: Matching M W) (stable: isStableMatching mPref wPref matching):
-    ∀ w, match inverseMatching (galeShapley mPref wPref) w with
+    ∀ w, match (galeShapley mPref wPref)⁻¹ w with
           | none => True
-          | some m => ∀ m', inverseMatching matching w = some m' →
+          | some m => ∀ m', matching⁻¹ w = some m' →
                 (wPref w).symm m' ≤ (wPref w).symm m := by
   intro w
-  rcases h: inverseMatching (galeShapley mPref wPref) w with _ | m
+  rcases h: (galeShapley mPref wPref)⁻¹ w with _ | m
   · simp
   · simp
     intro m' w_matches_m'

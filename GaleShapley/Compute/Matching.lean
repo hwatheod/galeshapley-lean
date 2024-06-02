@@ -104,12 +104,14 @@ def inverseMatching (matching: Matching W M): Matching M W := {
     exact h2
 }
 
+postfix:max "⁻¹" => inverseMatching
+
 theorem inverseProperty {matching: Matching M W} {m: M} {w: W}:
-    matching m = some w ↔ (inverseMatching matching) w = (some m) := by
+    matching m = some w ↔ matching⁻¹ w = (some m) := by
   exact inverseProperty' matching m w
 
 theorem inversePropertyNone (matching: Matching M W):
-    ∀ w, (∀ m, matching m ≠ some w) ↔ (inverseMatching matching) w = none := by
+    ∀ w, (∀ m, matching m ≠ some w) ↔ matching⁻¹ w = none := by
   intro w
   constructor
   · intros w_matches_none
@@ -128,8 +130,7 @@ theorem inversePropertyNone (matching: Matching M W):
     contradiction
 
 @[simp]
-theorem inverseInvolution (matching: Matching M W):
-    inverseMatching (inverseMatching matching) = matching := by
+theorem inverseInvolution (matching: Matching M W): matching⁻¹⁻¹ = matching := by
   apply matching_coe_injective
   apply funext
   intro m
