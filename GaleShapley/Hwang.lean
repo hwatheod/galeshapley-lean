@@ -79,7 +79,7 @@ theorem hwangTheorem_case1 (matching: Matching M W) (h: hwang_case1_hypothesis m
     rw [bad] at m_rev
     contradiction
   unfold isUnstablePair
-  simp [m_matches_w, (inverseProperty matching m w).mp m_matches_w]
+  simp [m_matches_w, inverseProperty.mp m_matches_w]
   simp [revendicateur] at m'_nonrev m_rev
   simp [m_matches_w] at m_rev
   constructor
@@ -109,7 +109,7 @@ theorem hwangTheorem_case1 (matching: Matching M W) (h: hwang_case1_hypothesis m
     suffices isUnstablePair mPref wPref (galeShapley mPref wPref) m w by
       exact galeShapleyNoUnstablePair mPref wPref this
     unfold isUnstablePair
-    simp [m'_gs_matches_w, (inverseProperty _ m' w).mp m'_gs_matches_w]
+    simp [m'_gs_matches_w, inverseProperty.mp m'_gs_matches_w]
     constructor
     · rcases h2: (galeShapley mPref wPref) m with _ | w'
       · simp
@@ -208,7 +208,7 @@ lemma neg_hwang_case1_lemma: ¬ (hwang_case1_hypothesis mPref wPref matching) �
     specialize this w m m_rev m_matches_w
     apply Option.ne_none_iff_exists.mp at this
     obtain ⟨m', w_gs_matches_m'⟩ := this
-    have := (inverseProperty (galeShapley mPref wPref) m' w).mpr w_gs_matches_m'.symm
+    have := inverseProperty.mpr w_gs_matches_m'.symm
     specialize neg_hwang_case1 m'
     simp [this] at neg_hwang_case1
     use m'
@@ -489,10 +489,10 @@ theorem hwangTheorem (matching: Matching M W) (existsRevendicateur: ∃ m, reven
       specialize this r'_proposed_w
       obtain ⟨m', w_inverse_matches_m', _⟩ := this
       use m'
-      exact (inverseProperty last_rev_proposal.matching m' w).mpr w_inverse_matches_m'
+      exact inverseProperty.mpr w_inverse_matches_m'
 
     obtain ⟨m, w_penultimate_gs_match_m⟩ := this
-    have m_matched_w := (inverseProperty last_rev_proposal.matching m w).mp w_penultimate_gs_match_m
+    have m_matched_w := inverseProperty.mp w_penultimate_gs_match_m
 
     /- We show that m is not a revendicateur. -/
     have m_ne_r: m ≠ r := by
@@ -551,7 +551,7 @@ theorem hwangTheorem (matching: Matching M W) (existsRevendicateur: ∃ m, reven
         rw [pref_inv.1, ← lastInvariant] at this
         exact this m_gs_matches_w0
     · right
-      simp [(inverseProperty matching r' w).mp r'_matches_w]
+      simp [inverseProperty.mp r'_matches_w]
       /- We must show that w prefers m to r'.
 
          Since m is the penultimate partner of w, then we must have the events

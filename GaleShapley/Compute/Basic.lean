@@ -83,10 +83,10 @@ def galeShapleyNextStep (state: GaleShapleyState M W): Option (GaleShapleyState 
         rw [h2]
         intro m_matches_w0
         have: w0_curMatch = m := by
-          have := (inverseProperty state.matching m w0).mp m_matches_w0
+          have := inverseProperty.mp m_matches_w0
           simp [w0_curMatch, curMatch, this]
         exact False.elim (h1.2 this)
-      · exact (inverseProperty state.matching m w).mp
+      · exact inverseProperty.mp
     )
     let newProposeIndex := fun m =>
       if m ≠ m0 then state.proposeIndex m else state.proposeIndex m + 1
@@ -113,7 +113,7 @@ def galeShapleyNextStep (state: GaleShapleyState M W): Option (GaleShapleyState 
           simp [w0_curMatch, curMatch, ← w0_proposee] at h1''
           intros _ w_eq_w0
           rw [← w_eq_w0]
-          rw [← inverseProperty state.matching m w0] at h1''
+          rw [← inverseProperty] at h1''
           exact state.matchedLastProposed m w0 h1''
     have newMatch_options: w0_newMatch = m0 ∨ w0_newMatch = w0_curMatch := by
       simp only [w0_newMatch, newMatch]
@@ -128,7 +128,7 @@ def galeShapleyNextStep (state: GaleShapleyState M W): Option (GaleShapleyState 
       · simp [newProposeIndex, newMatching, h1, createMatching, newMatching']
         intro
         use w0_newMatch
-        rw [← inverseProperty _ w0_newMatch w0]
+        rw [← inverseProperty]
         simp
         rcases newMatch_options with cond | cond <;> simp [cond]
         simp [w0_newMatch, newMatch, m0, w0]
@@ -155,8 +155,8 @@ def galeShapleyNextStep (state: GaleShapleyState M W): Option (GaleShapleyState 
         · obtain ⟨m', w_matches_m', w_prefers_m'⟩ := this
           use m'
           constructor
-          · rw [← inverseProperty state.matching m' w] at w_matches_m'
-            rw [← inverseProperty newMatching m' w]
+          · rw [← inverseProperty] at w_matches_m'
+            rw [← inverseProperty]
             have c1: m' ≠ m0 := by
               by_contra bad
               rw [bad, hm0.1] at w_matches_m'
@@ -167,7 +167,7 @@ def galeShapleyNextStep (state: GaleShapleyState M W): Option (GaleShapleyState 
               rcases h3: ((inverseMatching state.matching) w0) with _ | m''
               · simp [w0_curMatch, curMatch, h3] at bad
               · simp [w0_curMatch, curMatch, h3] at bad
-                have := (inverseProperty state.matching m'' w0).mpr h3
+                have := inverseProperty.mpr h3
                 rw [bad, w_matches_m'] at this
                 simp at this
                 contradiction
@@ -179,7 +179,7 @@ def galeShapleyNextStep (state: GaleShapleyState M W): Option (GaleShapleyState 
           simp [h2] at h1
           use w0_newMatch
           constructor
-          · rw [← inverseProperty newMatching w0_newMatch w0]
+          · rw [← inverseProperty]
             push_neg at h1
             simp [h1, newMatching, createMatching, newMatching']
             rcases newMatch_options <;> tauto

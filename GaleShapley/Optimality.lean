@@ -93,7 +93,7 @@ lemma neverRejectedByPossibleMatch' (state: GaleShapleyState M W) (m: M) (w: W):
         exact m'_ne_m (Equiv.injective (wPref w).symm this)
     have: isUnstablePair mPref wPref matching m' w := by
       unfold isUnstablePair
-      simp [(inverseProperty matching m w).mp m_matches_w, w_prefers_m']
+      simp [inverseProperty.mp m_matches_w, w_prefers_m']
       rcases h: matching m' with _ | w'
       · tauto  -- m' single in matching, we are done
       · simp
@@ -228,7 +228,7 @@ theorem receiverPessimal (matching: Matching M W) (stable: isStableMatching mPre
     intro m' w_matches_m'
 
     have proposer_optimal := proposerOptimal mPref wPref matching stable m
-    rw [← inverseProperty _ _ _] at h
+    rw [← inverseProperty] at h
     simp [h] at proposer_optimal
 
     unfold isStableMatching at stable
@@ -248,6 +248,6 @@ theorem receiverPessimal (matching: Matching M W) (stable: isStableMatching mPre
         have: (mPref m).symm w = (mPref m).symm w' := by omega
         exact Equiv.injective (mPref m).symm this.symm
       rw [this] at h2
-      rw [← inverseProperty _ _ _] at w_matches_m'
+      rw [← inverseProperty] at w_matches_m'
       have := matchingCondition' w_matches_m' h2
       rw [this]

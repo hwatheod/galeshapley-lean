@@ -44,7 +44,7 @@ lemma curMatch_lemma {state: GaleShapleyState M W} {m: M} (h: notDone state):
     curMatch h = some m → state.matching m = some (proposee h) := by
   intros m_eq_curMatch
   unfold curMatch at m_eq_curMatch
-  rwa [← inverseProperty state.matching _ _] at m_eq_curMatch
+  rwa [← inverseProperty] at m_eq_curMatch
 
 -- Lemmas about next state
 
@@ -169,7 +169,7 @@ lemma becameSingleImpliesRejected {state: GaleShapleyState M W} {m: M}
   split_ifs at this <;> try tauto
   case _ m_eq_curMatch m_not_newMatch =>
   simp [rejectee, m_eq_curMatch, m_not_newMatch]
-  simp [curMatch, ← inverseProperty _ _ _] at m_eq_curMatch
+  simp [curMatch, ← inverseProperty] at m_eq_curMatch
   exact m_eq_curMatch
 
 lemma proposerRemainsSingleImpliesRejected {state: GaleShapleyState M W} {m: M}

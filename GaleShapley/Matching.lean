@@ -122,9 +122,9 @@ def inverseMatching (matching: Matching W M): Matching M W := {
 /- Two theorems stating that `inverseMatching` has the right property. There are
    two cases depending on whether the inverse matching is defined at `w` or not.
 -/
-theorem inverseProperty (matching: Matching M W):
-    ∀ m, ∀ w, matching m = some w ↔ (inverseMatching matching) w = (some m) := by
-  exact inverseProperty' matching
+theorem inverseProperty {matching: Matching M W} {m: M} {w: W}:
+    matching m = some w ↔ (inverseMatching matching) w = (some m) := by
+  exact inverseProperty' matching m w
 
 theorem inversePropertyNone (matching: Matching M W):
     ∀ w, (∀ m, matching m ≠ some w) ↔ (inverseMatching matching) w = none := by
@@ -137,11 +137,11 @@ theorem inversePropertyNone (matching: Matching M W):
     obtain ⟨m, m_matches_w⟩ := bad
     specialize w_matches_none m
     symm at m_matches_w
-    rw [← inverseProperty matching m w] at m_matches_w
+    rw [← inverseProperty] at m_matches_w
     exact w_matches_none m_matches_w
   · intros w_matches_none m
     by_contra bad
-    rw [inverseProperty matching m w] at bad
+    rw [inverseProperty] at bad
     rw [bad] at w_matches_none
     contradiction
 
@@ -155,15 +155,14 @@ theorem inverseInvolution (matching: Matching M W):
   rcases h: matching m with _ | w
   · rw [← inversePropertyNone _ m]
     intro w
-    have := (inverseProperty matching m w)
+    have := inverseProperty (matching := matching) (m := m) (w := w)
     rw [Iff.symm Decidable.not_iff_not] at this
     simp
     rw [← this]
     by_contra bad
     rw [bad] at h
     contradiction
-  · apply (inverseProperty (inverseMatching matching) w m).mp
-    exact (inverseProperty matching m w).mp h
+  · rwa [← inverseProperty, ← inverseProperty]
 
 /- Create a matching from an `M → Option W` by verifying a condition based on a
    purported inverse matching `W → Option M`.

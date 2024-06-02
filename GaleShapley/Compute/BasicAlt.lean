@@ -111,7 +111,7 @@ def galeShapleyNextStep (state: GaleShapleyState M W): Option (GaleShapleyState 
         have w_accepted_m := this m w
         simp [h] at w_accepted_m
         simp only [newMatching] at m_newMatches_w
-        have := (inverseProperty acceptedProposals w m).mpr m_newMatches_w
+        have := inverseProperty.mpr m_newMatches_w
         specialize w_accepted_m this
         simp [newProposeIndex, w_accepted_m]
         simp [newProposals] at w_accepted_m
@@ -153,7 +153,7 @@ def galeShapleyNextStep (state: GaleShapleyState M W): Option (GaleShapleyState 
       by_cases lt_curProposed: ↑((state.mPref m).symm w) < state.proposeIndex m
       · have := state.noWorseThanProposedTo m w lt_curProposed
         obtain ⟨m', w_matches_m', w_prefers_m'_to_m⟩ := this
-        have m'_matches_w := (inverseProperty state.matching m' w).mpr w_matches_m'
+        have m'_matches_w := inverseProperty.mpr w_matches_m'
         have m'_proposed_w: m' ∈ proposalsToConsider w := by simp [proposalsToConsider, m'_matches_w]
         obtain ⟨m'', w_accepted_m'', w_prefers_m''_to_m'⟩ := w_proposedTo w m' m'_proposed_w
         use m''

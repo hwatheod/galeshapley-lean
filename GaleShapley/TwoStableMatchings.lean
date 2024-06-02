@@ -219,11 +219,11 @@ lemma asymmetric_preference_f {m: M} {w: W} (hf: tsm.f m = some w):
   simp [m_prefers_f] at m_f
   simp [w_prefers_g, m_prefers_g, mw, fg, m_prefers_f] at bad
   rw [hf] at m_f
-  rw [(inverseProperty tsm.f m w).mp hf] at bad
+  rw [inverseProperty.mp hf] at bad
   simp [m_f]
   have: (inverseMatching tsm.g) w ≠ some m := by
     by_contra bad2
-    rw [← inverseProperty tsm.g m w] at bad2
+    rw [← inverseProperty] at bad2
     rw [bad2] at m_f
     let _ := m_order tsm.mPref m
     exact (lt_irrefl _) m_f
@@ -360,7 +360,7 @@ lemma asymmetric_preference_f' {m: M} {w: W} (hf: tsm.f m = some w):
     by_contra bad
     rw [hf] at bad
     simp [w_prefers_g, m_prefers_g, fg, mw, m_prefers_f] at w_g
-    rw [(inverseProperty tsm.f _ _).mp hf, (inverseProperty tsm.g _ _).mp bad.symm] at w_g
+    rw [inverseProperty.mp hf, inverseProperty.mp bad.symm] at w_g
     let _ := m_order tsm.wPref w
     exact lt_irrefl _ w_g
   ) at m_g
@@ -401,7 +401,7 @@ def sameSinglesM (m: M): tsm.f m = none ↔ tsm.g m = none := by
 
   have := tsm_g_restrict_surjective tsm m (by unfold all_m_prefer_f; simp [m_f])
   obtain ⟨w', _, m_g_matches_w'⟩ := this
-  rw [← inverseProperty tsm.g _ _] at m_g_matches_w'
+  rw [← inverseProperty] at m_g_matches_w'
   rw [m_g_matches_w'] at m_g_unmatched
   contradiction
 
@@ -569,8 +569,8 @@ lemma supMatching_inverse_lemma:
         rw [bad] at w_g
         exact lt_irrefl _ w_g
       exact False.elim (this ((sameSinglesW tsm w).mp h3))
-    . have := asymmetric_preference_f' tsm ((inverseProperty tsm.f _ _).mpr h3) w_g
-      rw [← inverseProperty _ _ _] at h3 ⊢
+    . have := asymmetric_preference_f' tsm (inverseProperty.mpr h3) w_g
+      rw [← inverseProperty] at h3 ⊢
       have := supMatching_mf tsm m this
       rwa [h3] at this
   · push_neg at h
@@ -587,7 +587,7 @@ lemma supMatching_inverse_lemma:
       split_ifs at bad <;> contradiction
     · rw [h3] at h
       symm at h
-      rw [← inverseProperty _ _ _] at h h3 ⊢
+      rw [← inverseProperty] at h h3 ⊢
       simp [supMatching, Pi.sup_def, sup_eq_max]
       rw [h, h3]
       simp
