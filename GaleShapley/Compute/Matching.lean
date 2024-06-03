@@ -110,7 +110,7 @@ theorem inverseProperty {matching: Matching M W} {m: M} {w: W}:
     matching m = some w ↔ matching⁻¹ w = (some m) := by
   exact inverseProperty' matching m w
 
-theorem inversePropertyNone (matching: Matching M W):
+theorem inversePropertyNone {matching: Matching M W}:
     ∀ w, (∀ m, matching m ≠ some w) ↔ matching⁻¹ w = none := by
   intro w
   constructor
@@ -135,7 +135,7 @@ theorem inverseInvolution (matching: Matching M W): matching⁻¹⁻¹ = matchin
   apply funext
   intro m
   rcases h: matching m with _ | w
-  · rw [← inversePropertyNone _ m]
+  · rw [← inversePropertyNone m]
     intro w
     have := inverseProperty (matching := matching) (m := m) (w := w)
     rw [Iff.symm Decidable.not_iff_not] at this

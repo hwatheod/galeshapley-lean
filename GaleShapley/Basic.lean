@@ -113,6 +113,49 @@ def galeShapleyNextStep (state: GaleShapleyState M W): Option (GaleShapleyState 
         exact False.elim (h1.2 this)
       · exact inverseProperty.mp
     )
+    have inv_is_inv: newMatching⁻¹ = invNewMatching' := by
+      apply funext
+      intro w
+      simp [invNewMatching']
+      split_ifs
+      · case _ w_eq_w0 =>
+        rw [← inverseProperty]
+        simp [w_eq_w0, newMatching, createMatching, newMatching', w0_newMatch, newMatch,
+          ← m0_proposer, ← w0_proposee, w0_curMatch, curMatch]
+        rcases state.matching⁻¹ w0 with _ | m <;> simp
+        · split_ifs <;> tauto
+          intro
+          omega
+      · case _ w_ne_w0 =>
+        rcases h: state.matching⁻¹ w with _ | m
+        · rw [← inversePropertyNone] at h ⊢
+          intro m
+          simp [w_ne_w0, newMatching, createMatching, newMatching', w0_newMatch, newMatch,
+            ← m0_proposer, ← w0_proposee, w0_curMatch, curMatch]
+          rcases h2: state.matching⁻¹ w0 with _ | m' <;> (
+            simp
+            split_ifs <;> ((try simp); try tauto)
+          )
+        · rw [← inverseProperty] at h ⊢
+          simp [w_ne_w0, newMatching, createMatching, newMatching', w0_newMatch, newMatch,
+            ← m0_proposer, ← w0_proposee, w0_curMatch, curMatch]
+          rcases h2: state.matching⁻¹ w0 with _ | m' <;> simp
+          · split_ifs <;> ((try simp); try tauto)
+            case _ m_eq_m0 =>
+            rw [m_eq_m0, hm0.1] at h
+            contradiction
+          · simp [h]
+            split_ifs <;> (
+              try simp
+              try tauto
+              intro c1
+              by_cases h3: m = m0
+              · rw [h3, hm0.1] at h
+                contradiction
+              · rw [c1 h3, ← inverseProperty, h] at h2
+                simp at h2
+                contradiction
+            )
     let newProposeIndex := fun m =>
       if m ≠ m0 then state.proposeIndex m else state.proposeIndex m + 1
     have newBound: ∀ m, newProposeIndex m ≤ Fintype.card W := by
@@ -150,12 +193,9 @@ def galeShapleyNextStep (state: GaleShapleyState M W): Option (GaleShapleyState 
             (state.wPref w).symm m' <= (state.wPref w).symm m := by
       intros m w
       by_cases h1: m = m0 ∧ w = w0
-      · simp [newProposeIndex, newMatching, h1, createMatching, newMatching']
+      · simp [inv_is_inv, h1.1, h1.2, invNewMatching', newProposeIndex]
         intro
-        use w0_newMatch
-        rw [← inverseProperty]
-        simp
-        rcases newMatch_options with cond | cond <;> simp [cond]
+        rcases newMatch_options with cond | cond <;> try (simp [cond])
         simp [w0_newMatch, newMatch, m0, w0]
         split <;> rw [← m0_proposer]; split <;> omega
       · intro lt_newProposeIndex
@@ -180,41 +220,18 @@ def galeShapleyNextStep (state: GaleShapleyState M W): Option (GaleShapleyState 
         · obtain ⟨m', w_matches_m', w_prefers_m'⟩ := this
           use m'
           constructor
-          · rw [← inverseProperty] at w_matches_m'
-            rw [← inverseProperty]
-            have c1: m' ≠ m0 := by
-              by_contra bad
-              rw [bad, hm0.1] at w_matches_m'
-              contradiction
-            have c2: w0_curMatch ≠ some m' := by
-              by_contra bad
-              simp [w0_curMatch, curMatch] at bad
-              rcases h3: (state.matching⁻¹ w0) with _ | m''
-              · simp [w0_curMatch, curMatch, h3] at bad
-              · simp [w0_curMatch, curMatch, h3] at bad
-                have := inverseProperty.mpr h3
-                rw [bad, w_matches_m'] at this
-                simp at this
-                contradiction
-            simp [c1, c2, newMatching, createMatching, newMatching']
-            exact w_matches_m'
+          · simpa [inv_is_inv, h2, invNewMatching']
           · exact w_prefers_m'
         · push_neg at h2
-          rw [h2] at lt_newProposeIndex prev this ⊢
-          simp [h2] at h1
-          use w0_newMatch
-          constructor
-          · rw [← inverseProperty]
-            push_neg at h1
-            simp [h1, newMatching, createMatching, newMatching']
-            rcases newMatch_options <;> tauto
-          · obtain ⟨m'', w0_matches_m'', w0_prefers_m''⟩ := this
-            have: m'' = w0_curMatch := by
-              simp [w0_curMatch, curMatch, w0_matches_m'']
-            simp [w0_curMatch] at this
-            suffices (state.wPref w0).symm w0_newMatch ≤ (state.wPref w0).symm m'' by omega
-            simp [w0_newMatch, newMatch, ← m0_proposer, ← w0_proposee, ← this]
-            split_ifs <;> omega
+          simp [inv_is_inv, h2, invNewMatching']
+          rw [h2] at this
+          obtain ⟨m'', w0_matches_m'', w0_prefers_m''⟩ := this
+          have: m'' = w0_curMatch := by
+            simp [w0_curMatch, curMatch, w0_matches_m'']
+          simp [w0_curMatch] at this
+          suffices (state.wPref w0).symm w0_newMatch ≤ (state.wPref w0).symm m'' by omega
+          simp [w0_newMatch, newMatch, ← m0_proposer, ← w0_proposee, ← this]
+          split_ifs <;> omega
     let newState := {
       mPref := state.mPref
       wPref := state.wPref
