@@ -193,7 +193,7 @@ def galeShapleyNextStep (state: GaleShapleyState M W): Option (GaleShapleyState 
             (state.wPref w).symm m' <= (state.wPref w).symm m := by
       intros m w
       by_cases h1: m = m0 ∧ w = w0
-      · simp [inv_is_inv, h1.1, h1.2, invNewMatching', newProposeIndex]
+      · simp [inv_is_inv, h1, invNewMatching', newProposeIndex]
         intro
         rcases newMatch_options with cond | cond <;> try (simp [cond])
         simp [w0_newMatch, newMatch, m0, w0]
@@ -206,14 +206,10 @@ def galeShapleyNextStep (state: GaleShapleyState M W): Option (GaleShapleyState 
           · push_neg at h2
             simp [h2, newProposeIndex] at lt_newProposeIndex ⊢
             by_contra bad
-            have eq: (state.mPref m0).symm w = ⟨state.proposeIndex m0, hm0.2⟩ := by
-              apply_fun (fun x => x.val)
-              simp
-              omega
-              exact Fin.val_injective
-            have w0_eq: w0 = (state.mPref m0) ⟨state.proposeIndex m0, hm0.2⟩ := by rfl
-            rw [← eq] at w0_eq
-            simp at w0_eq
+            have eq: (state.mPref m0).symm w = state.proposeIndex m0 := by omega
+            simp [proposee, ← m0_proposer] at w0_proposee
+            simp_rw [← eq] at w0_proposee
+            simp at w0_proposee
             tauto
         have := state.noWorseThanProposedTo m w prev
         by_cases h2: w ≠ w0
