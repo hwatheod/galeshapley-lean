@@ -95,10 +95,10 @@ def inverseMatching (matching: Matching W M): Matching M W := {
   matching := inverseMatching' matching
   matchingCondition := by
     simp only [isMatching, forall_exists_index]
-    intros w1 w2 m h2 h1
+    intros m1 m2 w h2 h1
     rw [h2] at h1
-    apply (inverseProperty' matching m w2).mpr at h2
-    apply (inverseProperty' matching m w1).mpr at h1
+    apply (inverseProperty' matching w m2).mpr at h2
+    apply (inverseProperty' matching w m1).mpr at h1
     rw [h1] at h2
     simp only [Option.some.injEq] at h2
     exact h2
