@@ -15,6 +15,8 @@ namespace GaleShapley
 open Classical BigOperators GaleShapley.Iterate
 noncomputable section
 
+export WithBot (some)
+
 variable {M W: Type} [Fintype M] [Fintype W]
 
 abbrev Pref (M W: Type) [Fintype M] [Fintype W] := M → Fin (Fintype.card W) ≃ W
@@ -34,7 +36,7 @@ structure GaleShapleyState (M W: Type) [Fintype M] [Fintype W] where
         (wPref w).symm m' <= (wPref w).symm m         -- w prefers m' to m
 
 -- at least one proposer is unmatched and has at least one proposal left to make
-def notDone (state: GaleShapleyState M W) := ∃ m, state.matching m = none ∧ state.proposeIndex m < Fintype.card W
+def notDone (state: GaleShapleyState M W) := ∃ m, state.matching m = ⊥ ∧ state.proposeIndex m < Fintype.card W
 
 -- these simp lemmas state an obvious bound on the proposeIndex
 @[simp]
@@ -60,19 +62,19 @@ def proposedAtState {state: GaleShapleyState M W} (h: notDone state) (m: M) (w: 
     m = choose h ∧ proposee h = w
 
 -- the current match of the proposee at this state, if any
-def curMatch {state: GaleShapleyState M W} (h: notDone state): Option M :=
+def curMatch {state: GaleShapleyState M W} (h: notDone state): WithBot M :=
     state.matching⁻¹ (proposee h)
 
 -- the match of the proposee after the proposal is either accepted or rejected
 def newMatch {state: GaleShapleyState M W} (h: notDone state): M :=
     match curMatch h with
-    | none => choose h
+    | ⊥ => choose h
     | some m => if (state.wPref (proposee h)).symm (choose h) ≤
         (state.wPref (proposee h)).symm m then choose h else m
 
 -- who is rejected by the proposee at this state, if any
-def rejectee {state: GaleShapleyState M W} (h: notDone state): Option M :=
-    if curMatch h = none then none
+def rejectee {state: GaleShapleyState M W} (h: notDone state): WithBot M :=
+    if curMatch h = ⊥ then ⊥
     else if curMatch h = some (newMatch h) then some (choose h) else curMatch h
 
 -- says that m was rejected by w at this state
@@ -82,23 +84,23 @@ def rejectedAtState {state: GaleShapleyState M W} (h: notDone state) (m: M) (w: 
 /- This is a key definition. It implements one iteration of the algorithm and proves that
    the invariants are preserved.
  -/
-def galeShapleyNextStep (state: GaleShapleyState M W): Option (GaleShapleyState M W) :=
+def galeShapleyNextStep (state: GaleShapleyState M W): WithBot (GaleShapleyState M W) :=
   if h0: notDone state then
     let hm0' := Classical.choose_spec h0
     let m0 := choose h0
     have m0_proposer: m0 = choose h0 := by rfl
-    have hm0: state.matching m0 = none ∧ state.proposeIndex m0 < Fintype.card W := by
+    have hm0: state.matching m0 = ⊥ ∧ state.proposeIndex m0 < Fintype.card W := by
       rw [m0_proposer]
       exact hm0'
     let w0 := proposee h0
     have w0_proposee: w0 = proposee h0 := by rfl
     let w0_curMatch := curMatch h0
     let w0_newMatch := newMatch h0
-    let newMatching': M → Option W := fun m =>
+    let newMatching': M → WithBot W := fun m =>
       if m ≠ m0 ∧ w0_curMatch ≠ some m then state.matching m
       else if m = w0_newMatch then some w0
-      else none
-    let invNewMatching' : W → Option M := fun w =>
+      else ⊥
+    let invNewMatching' : W → WithBot M := fun w =>
       if w ≠ w0 then state.matching⁻¹ w else some w0_newMatch
     let newMatching := createMatching newMatching' invNewMatching' (by
       intros m w
@@ -127,7 +129,7 @@ def galeShapleyNextStep (state: GaleShapleyState M W): Option (GaleShapleyState 
           intro
           omega
       · case _ w_ne_w0 =>
-        rcases h: state.matching⁻¹ w with _ | m
+        cases h: state.matching⁻¹ w
         · rw [← inversePropertyNone] at h ⊢
           intro m
           simp [w_ne_w0, newMatching, createMatching, newMatching', w0_newMatch, newMatch,
@@ -136,18 +138,18 @@ def galeShapleyNextStep (state: GaleShapleyState M W): Option (GaleShapleyState 
             simp
             split_ifs <;> ((try simp); try tauto)
           )
-        · rw [← inverseProperty] at h ⊢
+        · case _ m =>
+          rw [← inverseProperty] at h ⊢
           simp [w_ne_w0, newMatching, createMatching, newMatching', w0_newMatch, newMatch,
             ← m0_proposer, ← w0_proposee, w0_curMatch, curMatch]
-          rcases h2: state.matching⁻¹ w0 with _ | m' <;> simp
+          cases h2: state.matching⁻¹ w0 <;> simp
           · split_ifs <;> ((try simp); try tauto)
             case _ m_eq_m0 =>
             rw [m_eq_m0, hm0.1] at h
             contradiction
-          · simp [h]
+          · case _ m' =>
+            simp [h]
             split_ifs <;> (
-              try simp
-              try tauto
               intro c1
               by_cases h3: m = m0
               · rw [h3, hm0.1] at h
@@ -173,13 +175,17 @@ def galeShapleyNextStep (state: GaleShapleyState M W): Option (GaleShapleyState 
         exact state.matchedLastProposed m w
       · by_cases h1': m = m0
         · simp [newMatching, newProposeIndex, h1', createMatching, newMatching']
-          intros _ c2
+          split_ifs <;> try tauto
+          simp
+          intro c2
           rw [← c2]
           simp [w0, proposee]
         · have h1'': w0_curMatch = m := by tauto
           simp [newMatching, newProposeIndex, h1', ← h1'', createMatching, newMatching']
           simp [w0_curMatch, curMatch, ← w0_proposee] at h1''
-          intros _ w_eq_w0
+          split_ifs <;> try tauto
+          simp
+          intro w_eq_w0
           rw [← w_eq_w0]
           rw [← inverseProperty] at h1''
           exact state.matchedLastProposed m w0 h1''
@@ -238,7 +244,7 @@ def galeShapleyNextStep (state: GaleShapleyState M W): Option (GaleShapleyState 
       noWorseThanProposedTo := newNoWorseThanProposedTo
     }
     some newState
-  else none
+  else ⊥
 
 -- prove the termination of the algorithm
 def galeShapleyTermination (state: GaleShapleyState M W) :=
@@ -276,12 +282,7 @@ lemma galeShapleyDecreasing {state : GaleShapleyState M W}
 def galeShapleyTerminator: Terminator (GaleShapleyState M W) := {
   nextStep := galeShapleyNextStep
   termination := galeShapleyTermination
-  decreasing := fun state nd => by
-    rw [Option.isSome_iff_exists] at nd
-    obtain ⟨nextState, nextStep⟩ := nd
-    simp_rw [nextStep]
-    simp
-    exact galeShapleyDecreasing nextStep
+  decreasing := fun state nd => galeShapleyDecreasing (by simp [galeShapleyNextStep])
 }
 
 @[simp]
@@ -358,12 +359,12 @@ lemma galeShapley_def:
 
 -- Various lemmas relating the next state to the current state
 
-lemma notDoneIsSome {state: GaleShapleyState M W}: notDone state → Option.isSome (galeShapleyNextStep state) := by
+lemma notDoneIsSome {state: GaleShapleyState M W}: notDone state → galeShapleyNextStep state ≠ ⊥ := by
   intro nd
   unfold galeShapleyNextStep
   simp [nd]
 
-lemma someIsNotDone {state: GaleShapleyState M W}: Option.isSome (galeShapleyNextStep state) → notDone state := by
+lemma someIsNotDone {state: GaleShapleyState M W}: galeShapleyNextStep state ≠ ⊥ → notDone state := by
   intro is_some
   by_contra bad
   simp [galeShapleyNextStep, bad] at is_some
@@ -373,16 +374,18 @@ lemma nextStateSomeIsNotDone {state: GaleShapleyState M W} (nextStateSome: galeS
   unfold galeShapleyNextStep at nextStateSome
   split_ifs at nextStateSome
   tauto
+  contradiction
 
-lemma nextStateNoneisDone {state: GaleShapleyState M W} (nextStateSome: galeShapleyNextStep state = none) :
+lemma nextStateNoneisDone {state: GaleShapleyState M W} (nextStateSome: galeShapleyNextStep state = ⊥) :
     ¬ notDone state := by
   unfold galeShapleyNextStep at nextStateSome
   split_ifs at nextStateSome with done
+  contradiction
   exact done
 
 lemma pref_invariant_nextState' {state: (GaleShapleyState M W)} (h: notDone state):
-     ((galeShapleyNextStep state).get (notDoneIsSome h)).mPref = state.mPref ∧
-     ((galeShapleyNextStep state).get (notDoneIsSome h)).wPref = state.wPref := by
+     ((galeShapleyNextStep state).unbot (notDoneIsSome h)).mPref = state.mPref ∧
+     ((galeShapleyNextStep state).unbot (notDoneIsSome h)).wPref = state.wPref := by
   simp [galeShapleyNextStep, h]
 
 lemma pref_invariant_nextState {state: (GaleShapleyState M W)}
@@ -404,7 +407,7 @@ lemma wPref_invariant_nextState {state: (GaleShapleyState M W)}
 -- Lemmas used to carry out induction arguments on the algorithm.
 -- Specializes the corresponding lemmas in `Iterate` for convenience.
 
-lemma iterate_single_state {state: GaleShapleyState M W} (noneStep: galeShapleyNextStep state = none):
+lemma iterate_single_state {state: GaleShapleyState M W} (noneStep: galeShapleyNextStep state = ⊥):
     galeShapleyIterate state = [state] := Iterate.iterate_single_state noneStep
 
 lemma iterate_next_state {state: GaleShapleyState M W} (nextStep: galeShapleyNextStep state = some nextState):
@@ -444,7 +447,7 @@ lemma wPref_invariant: (galeShapleyFinalState mPref wPref).wPref = wPref :=
 -- Now we prepare for the proof that Gale-Shapley algorithm produces a stable matching.
 
 lemma finalStateHasNoNextStep': ∀ state: (GaleShapleyState M W),
-    galeShapleyNextStep ((galeShapleyIterate state).getLast (galeShapleyIterateNonEmpty state)) = none := by
+    galeShapleyNextStep ((galeShapleyIterate state).getLast (galeShapleyIterateNonEmpty state)) = ⊥ := by
   intro state
   induction state using (iterate.induct galeShapleyTerminator) with
   | case1 state noneStep =>
@@ -455,10 +458,10 @@ lemma finalStateHasNoNextStep': ∀ state: (GaleShapleyState M W),
       rw [List.getLast_cons (galeShapleyIterateNonEmpty _)]
       exact ih
 
-lemma finalStateHasNoNextStep: galeShapleyNextStep (galeShapleyFinalState mPref wPref) = none := by
+lemma finalStateHasNoNextStep: galeShapleyNextStep (galeShapleyFinalState mPref wPref) = ⊥ := by
   apply finalStateHasNoNextStep'
 
-lemma unmatchedExhaustedProposals: ∀ m, galeShapley mPref wPref m = none →
+lemma unmatchedExhaustedProposals: ∀ m, galeShapley mPref wPref m = ⊥ →
     (galeShapleyFinalState mPref wPref).proposeIndex m = Fintype.card W := by
   have := finalStateHasNoNextStep mPref wPref
   apply nextStateNoneisDone at this
@@ -468,8 +471,8 @@ lemma unmatchedExhaustedProposals: ∀ m, galeShapley mPref wPref m = none →
   exact this
 
 def isUnstablePair (matching: Matching M W) (m: M) (w: W): Prop :=
-  (matching m = none ∨ (mPref m).symm w < (mPref m).symm (Option.getD (matching m) w)) ∧
-  (matching⁻¹ w = none ∨ (wPref w).symm m < (wPref w).symm (Option.getD (matching⁻¹ w) m))
+  (matching m = ⊥ ∨ (mPref m).symm w < (mPref m).symm ((matching m).unbot' w)) ∧
+  (matching⁻¹ w = ⊥ ∨ (wPref w).symm m < (wPref w).symm ((matching⁻¹ w).unbot' m))
 
 def isStableMatching (matching: Matching M W): Prop :=
   ∀ m, ∀ w, ¬ (isUnstablePair mPref wPref matching m w)
@@ -488,14 +491,15 @@ theorem galeShapleyGivesStableMatching: isStableMatching mPref wPref (galeShaple
     obtain ⟨m', w_matches_m', w_prefers_m'⟩ := this
     simp [w_matches_m'] at wUnstable
     omega
-  · rcases h: ((galeShapley mPref wPref) m) with _ | w'
+  · cases h: ((galeShapley mPref wPref) m)
     · have := unmatchedExhaustedProposals mPref wPref m
       specialize this h
       rw [this] at m_proposed_w
       push_neg at m_proposed_w
       have : (mPref m).symm w < Fintype.card W := by simp only [Fin.is_lt]
       omega
-    · simp [h] at mUnstable
+    · case _ w' =>
+      simp [h] at mUnstable
       have := (galeShapleyFinalState mPref wPref).matchedLastProposed m w' h
       simp at this
       simp only [gsFinalState] at m_proposed_w

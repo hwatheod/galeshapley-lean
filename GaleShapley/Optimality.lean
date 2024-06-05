@@ -23,6 +23,8 @@ namespace GaleShapley
 open Classical GaleShapley.Iterate
 noncomputable section
 
+export WithBot (some)
+
 variable {M W: Type} [Fintype M] [Fintype W] [Nonempty M] [Nonempty W]
   (mPref: Pref M W)
   (wPref: Pref W M)
@@ -52,7 +54,7 @@ lemma neverRejectedByPossibleMatch' (state: GaleShapleyState M W) (m: M) (w: W):
     unfold rejectedAtState at w_rejected_m
     obtain ⟨w_proposee, m_rejectee⟩ := w_rejected_m
     unfold rejectee at m_rejectee
-    have w_matched: curMatch nd_rjs ≠ none := by
+    have w_matched: curMatch nd_rjs ≠ ⊥ := by
       by_contra bad
       simp [bad] at m_rejectee
     simp [w_matched] at m_rejectee
@@ -94,9 +96,10 @@ lemma neverRejectedByPossibleMatch' (state: GaleShapleyState M W) (m: M) (w: W):
     have: isUnstablePair mPref wPref matching m' w := by
       unfold isUnstablePair
       simp [inverseProperty.mp m_matches_w, w_prefers_m']
-      rcases h: matching m' with _ | w'
+      cases h: matching m'
       · tauto  -- m' single in matching, we are done
-      · simp
+      · case _ w' =>
+        simp
         have w'_ne_w: w' ≠ w := by
           by_contra bad
           rw [bad] at h
@@ -160,14 +163,14 @@ lemma neverRejectedByPossibleMatch: possibleMatch mPref wPref m w →
 
 theorem proposerOptimal (matching: Matching M W) (stable: isStableMatching mPref wPref matching):
     ∀ m, match galeShapley mPref wPref m with
-         | none => matching m = none
+         | ⊥ => matching m = ⊥
          | some w => ∀ w', matching m = some w' → (mPref m).symm w ≤ (mPref m).symm w' := by
   intro m
   split
   · case _ m_gs_single =>
     by_contra bad
     push_neg at bad
-    rw [Option.ne_none_iff_exists] at bad
+    rw [WithBot.ne_bot_iff_exists] at bad
     obtain ⟨w, m_matches_w⟩ := bad
 
     -- m is single so must have been rejected by everybody
@@ -183,6 +186,7 @@ theorem proposerOptimal (matching: Matching M W) (stable: isStableMatching mPref
     specialize this s hs h
     contradiction
   · case _ w m_gs_matches_w =>
+    change (galeShapley mPref wPref) m = some w at m_gs_matches_w
     intros w' m_matches_w'
     have proposalIndexEq := (galeShapleyFinalState mPref wPref).matchedLastProposed m w m_gs_matches_w
     simp at proposalIndexEq
@@ -218,13 +222,14 @@ theorem proposerOptimal (matching: Matching M W) (stable: isStableMatching mPref
 
 theorem receiverPessimal (matching: Matching M W) (stable: isStableMatching mPref wPref matching):
     ∀ w, match (galeShapley mPref wPref)⁻¹ w with
-          | none => True
+          | ⊥ => True
           | some m => ∀ m', matching⁻¹ w = some m' →
                 (wPref w).symm m' ≤ (wPref w).symm m := by
   intro w
-  rcases h: (galeShapley mPref wPref)⁻¹ w with _ | m
+  cases h: (galeShapley mPref wPref)⁻¹ w
   · simp
-  · simp
+  · case _ m =>
+    simp
     intro m' w_matches_m'
 
     have proposer_optimal := proposerOptimal mPref wPref matching stable m
@@ -239,9 +244,10 @@ theorem receiverPessimal (matching: Matching M W) (stable: isStableMatching mPre
     rw [w_matches_m'] at stable
     simp at stable
 
-    rcases h2: matching m with _ | w'
+    cases h2: matching m
     · tauto
-    · simp [h2] at stable
+    · case _ w' =>
+      simp [h2] at stable
       rcases stable <;> try assumption
       specialize proposer_optimal w' h2
       have: w' = w := by

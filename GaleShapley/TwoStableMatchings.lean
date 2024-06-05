@@ -38,6 +38,8 @@ namespace GaleShapley
 
 variable {M W: Type} [Fintype M] [Fintype W]
 
+export WithBot (some)
+
 open Classical
 noncomputable section
 
@@ -65,40 +67,32 @@ lemma isUnstableEquiv (mPref: Pref M W) (wPref: Pref W M)
 
   let _ := m_order' mPref m
   let _ := m_order' wPref w
-  have _ := WithBot.none_lt_some w -- writing none < some w would go through instLTOption. we just give the proof
-  have _ := WithBot.none_lt_some m
+  have _ := WithBot.bot_lt_coe w
+  have _ := WithBot.bot_lt_coe m
 
   constructor
-  · rcases matching m with _ | w'
+  · cases matching m
     · simp
-      rcases matching⁻¹ w with _ | m'
+      cases matching⁻¹ w
       · tauto
-      · rw [WithBot.some_lt_some]
+      · case _ m' =>
+        rw [WithBot.coe_lt_coe]
         simp [m_order'_lt_def]
-        tauto
-    · simp only [Option.getD_some, false_or]
-      rcases matching⁻¹ w with _ | m'
-      · rw [WithBot.some_lt_some]
-        simp [m_order'_lt_def]
-        tauto
-      · simp only [Option.getD_some, false_or]
-        rw [WithBot.some_lt_some, WithBot.some_lt_some]
-        simp [m_order'_lt_def]
-  · rcases h: matching m with _ | w'
-    · simp
-      rcases matching⁻¹ w with _ | m'
+    · case _ w' =>
+      simp
+      cases matching⁻¹ w
+      · simp [WithBot.coe_lt_coe, m_order'_lt_def]
+      · simp [WithBot.coe_lt_coe, m_order'_lt_def]
+        omega
+  · cases h: matching m
+    · cases matching⁻¹ w
       · simp
-      . simp
-        rw [WithBot.some_lt_some]
-        simp [m_order'_lt_def]
-    · simp only [Option.getD_some, false_or, h]
-      rcases matching⁻¹ w with _ | m'
-      · rw [WithBot.some_lt_some]
-        simp [m_order'_lt_def]
-        tauto
-      · simp only [Option.getD_some, false_or]
-        rw [WithBot.some_lt_some, WithBot.some_lt_some]
-        simp [m_order'_lt_def]
+      . simp [WithBot.coe_lt_coe, m_order'_lt_def]
+    · simp [h]
+      cases matching⁻¹ w
+      · simp [WithBot.coe_lt_coe, m_order'_lt_def]
+      · simp [WithBot.coe_lt_coe, m_order'_lt_def]
+        omega
 
 /- The inverse of a stable matching is stable. -/
 lemma stableSymmetry {f: Matching M W} (f_stable: isStableMatching mPref wPref f):
@@ -264,7 +258,7 @@ lemma image_prefer_g_prefer_f {w: W} (h: w ∈ all_w_prefer_g tsm):
   exact this
 
 def tsm_f_restrict: all_m_prefer_f tsm → all_w_prefer_g tsm :=
-  fun m => ⟨(tsm.f m).get (by
+  fun m => ⟨(tsm.f m).unbot (by
     have := Subtype.prop m
     have := image_prefer_f_prefer_g tsm this
     obtain ⟨w, hw, _⟩ := this
@@ -291,13 +285,13 @@ lemma tsm_f_restrict_injective: Function.Injective (tsm_f_restrict tsm) := by
   unfold tsm_f_restrict
   intro eq
   generalize_proofs p1 p2 p3 p4 at eq
-  rw [Option.isSome_iff_exists] at p1 p3
+  rw [WithBot.ne_bot_iff_exists] at p1 p3
   obtain ⟨w, hw⟩ := p1
   obtain ⟨w', hw'⟩ := p3
-  simp_rw [hw, hw'] at eq
+  simp_rw [← hw, ← hw'] at eq
   simp at eq
   rw [eq] at hw
-  have := matchingCondition' hw hw'
+  have := matchingCondition' hw.symm hw'.symm
   exact Subtype.val_injective this
 
 lemma tsm_g_restrict_injective: Function.Injective (tsm_g_restrict tsm) := by
@@ -334,9 +328,11 @@ lemma tsm_f_restrict_surjective: ∀ w ∈ all_w_prefer_g tsm, ∃ m, m_prefers_
   obtain ⟨m, hm⟩ := this
   simp [tsm_f_restrict] at hm
   generalize_proofs p at hm
-  have := Option.eq_some_iff_get_eq.mpr ⟨p, hm⟩
+  have := WithBot.ne_bot_iff_exists.mp p
+  obtain ⟨w', hw'⟩ := this
+  simp [← hw'] at hm
   use m
-  simp [this]
+  simp [← hw', hm]
   have := Subtype.prop m
   simp [all_m_prefer_f] at this
   exact this
@@ -382,8 +378,8 @@ lemma asymmetric_preference_g' {m: M} {w: W} (hg: tsm.g m = some w):
 /- Gale and Sotomayor's result that the same people are single in all stable matchings.
    This is sometimes called the bachelor or bachelorette theorem. This is the second
    theorem in Dumont section 1.3. -/
-def sameSinglesM (m: M): tsm.f m = none ↔ tsm.g m = none := by
-  suffices ∀ (tsm: TwoStableMatchings M W) (m: M), tsm.g m = none → tsm.f m = none by
+def sameSinglesM (m: M): tsm.f m = ⊥ ↔ tsm.g m = ⊥ := by
+  suffices ∀ (tsm: TwoStableMatchings M W) (m: M), tsm.g m = ⊥ → tsm.f m = ⊥ by
     constructor
     · exact this (fg tsm) m
     · exact this tsm m
@@ -391,7 +387,7 @@ def sameSinglesM (m: M): tsm.f m = none ↔ tsm.g m = none := by
   intro tsm m m_g_unmatched
   by_contra m_f_matched
   push_neg at m_f_matched
-  rw [Option.ne_none_iff_exists] at m_f_matched
+  rw [WithBot.ne_bot_iff_exists] at m_f_matched
   obtain ⟨w, m_f_matches_w⟩ := m_f_matched
 
   have m_f: m_prefers_f tsm m := by
@@ -405,7 +401,7 @@ def sameSinglesM (m: M): tsm.f m = none ↔ tsm.g m = none := by
   rw [m_g_matches_w'] at m_g_unmatched
   contradiction
 
-def sameSinglesW (w: W): tsm.f⁻¹ w = none ↔ tsm.g⁻¹ w = none :=
+def sameSinglesW (w: W): tsm.f⁻¹ w = ⊥ ↔ tsm.g⁻¹ w = ⊥ :=
   sameSinglesM (mw tsm) w
 
 /- Now we prove several lemmas to establish Conway's result that stable matchings
@@ -439,21 +435,25 @@ lemma supMatchingClosed (tsm: TwoStableMatchings M W):
     let _ := m_order tsm.mPref m1
     rwa [max_comm] at this
   intros w m2_matches_w m1_eq_m2
-  rcases hf2: (tsm.f m2) with _ | wf2
-  · have: tsm.g m2 = none := (sameSinglesM tsm m2).mp hf2
+  cases hf2: (tsm.f m2)
+  · have: tsm.g m2 = ⊥ := (sameSinglesM tsm m2).mp hf2
     simp [hf2, this] at m2_matches_w
-  · rcases hg2: (tsm.g m2) with _ | wg2
-    · have: tsm.f m2 = none := (sameSinglesM tsm m2).mpr hg2
+  · case _ wf2 =>
+    cases hg2: (tsm.g m2)
+    · have: tsm.f m2 = ⊥ := (sameSinglesM tsm m2).mpr hg2
       simp [this] at hf2
-    · rcases hf1: (tsm.f m1) with _ | wf1
-      · have: tsm.g m1 = none := (sameSinglesM tsm m1).mp hf1
+    · case _ wg2 =>
+      cases hf1: (tsm.f m1)
+      · have: tsm.g m1 = ⊥ := (sameSinglesM tsm m1).mp hf1
         simp [hf2, hg2, hf1, this] at m2_matches_w m1_eq_m2
         let _ := m_order tsm.mPref m1
         simp [m2_matches_w] at m1_eq_m2
-      · rcases hg1: (tsm.g m1) with _ | wg1
-        · have: tsm.f m1 = none := (sameSinglesM tsm m1).mpr hg1
+      · case _ wf1 =>
+        cases hg1: (tsm.g m1)
+        · have: tsm.f m1 = ⊥ := (sameSinglesM tsm m1).mpr hg1
           simp [this] at hf1
         · -- the real proof starts here
+          case _ wg1 =>
           simp [hf2, hg2, hf1, hg1] at m2_matches_w m1_eq_m2 h2
           rw [m2_matches_w] at m1_eq_m2
 
@@ -481,7 +481,6 @@ lemma supMatchingClosed (tsm: TwoStableMatchings M W):
                   let _ := m_order tsm.mPref m2
                   let _ := m_order' tsm.mPref m2
                   simp at bad
-                  rw [WithBot.some_le_some] at h2 bad
                   exact le_antisymm bad h2
                 rw [← this] at hf2
                 exact h.1 hf2
@@ -560,20 +559,21 @@ lemma supMatching_inverse_lemma:
       simp [w_prefers_g, m_prefers_g, mw, m_prefers_f]
       exact lt_of_le_of_ne h2 h
 
-    rcases h3: tsm.f⁻¹ w with _ | m
+    cases h3: tsm.f⁻¹ w
     · simp [w_prefers_g, m_prefers_g, mw, m_prefers_f] at w_g
       rw [h3] at w_g
-      have: tsm.g⁻¹ w ≠ none := by
+      have: tsm.g⁻¹ w ≠ ⊥ := by
         by_contra bad
         rw [bad] at w_g
         exact lt_irrefl _ w_g
       exact False.elim (this ((sameSinglesW tsm w).mp h3))
-    . have := asymmetric_preference_f' tsm (inverseProperty.mpr h3) w_g
+    . case _ m =>
+      have := asymmetric_preference_f' tsm (inverseProperty.mpr h3) w_g
       rw [← inverseProperty] at h3 ⊢
       have := supMatching_mf tsm m this
       rwa [h3] at this
   · push_neg at h
-    rcases h3: tsm.f⁻¹ w with _ | m
+    cases h3: tsm.f⁻¹ w
     · rw [h3] at h
       symm at h
       rw [← inversePropertyNone] at h h3 ⊢
@@ -584,7 +584,8 @@ lemma supMatching_inverse_lemma:
       by_contra bad
       simp [max_def] at bad
       split_ifs at bad <;> contradiction
-    · rw [h3] at h
+    · case _ m =>
+      rw [h3] at h
       symm at h
       rw [← inverseProperty] at h h3 ⊢
       simp [supMatching, Pi.sup_def, sup_eq_max]

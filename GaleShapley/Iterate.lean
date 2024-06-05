@@ -13,7 +13,7 @@ import Mathlib.Algebra.Order.Ring.Nat
 
   `Terminator α`: a structure containing the fields
       `nextStep`: a function `α` → `Option α` which returns either the next
-         state or `none` to indicate termination
+         state or `⊥` to indicate termination
       `termination`: a function `α` → `ℕ` to prove termination.
       `decreasing`: A proof that the `termination` function decreases at each step.
 
@@ -26,16 +26,18 @@ namespace GaleShapley.Iterate
 
 variable {α: Type} [Inhabited α]
 
+export WithBot (some)
+
 structure Terminator (α: Type) where
-  nextStep: α → Option α
+  nextStep: α → WithBot α
   termination: α → ℕ
-  decreasing: ∀ s, (h: Option.isSome (nextStep s)) →
-    termination (Option.get (nextStep s) h) < termination s
+  decreasing: ∀ s, (h: nextStep s ≠ ⊥) →
+    termination ((nextStep s).unbot h) < termination s
 
 set_option linter.unusedVariables false in
 def iterate (step: Terminator α) (state: α) : List α :=
   match h: step.nextStep state with
-  | none => [state]
+  | ⊥ => [state]
   | some newState => state :: iterate step newState
 termination_by
   step.termination state
@@ -51,7 +53,7 @@ lemma iterateIsNonEmpty (step: Terminator α) (state: α):
   split <;> simp
 
 lemma iterate_single_state {step: Terminator α} {state: α}
-    (noneStep: step.nextStep state = none):
+    (noneStep: step.nextStep state = ⊥):
     iterate step state = [state] := by
   unfold iterate
   rw [noneStep]
@@ -64,10 +66,10 @@ lemma iterate_next_state {step: Terminator α} {state: α}
 
 lemma decreasing_nextStepSome {step: Terminator α} (nextStep: step.nextStep state = some nextState):
     step.termination nextState < step.termination state := by
-  rw [Option.eq_some_iff_get_eq] at nextStep
-  obtain ⟨h2, nextStep⟩ := nextStep
-  have := step.decreasing state h2
-  rwa [nextStep] at this
+  have := step.decreasing state (by simp [nextStep])
+  simp_rw [nextStep] at this
+  simp at this
+  exact this
 
 lemma global_decreasing {step: Terminator α} {s state: α}
     (h: s ∈ iterate step state): step.termination s ≤ step.termination state := by
@@ -77,6 +79,7 @@ lemma global_decreasing {step: Terminator α} {s state: α}
   simp [this] at h
   simp [h]
 | case2 state nextState nextStep ih =>
+  change step.nextStep state = some nextState at nextStep
   have := iterate_next_state nextStep
   simp [this] at h
   rcases h with s_state | s_next
@@ -179,6 +182,7 @@ lemma iterate_nextStateLastIsSame {state: α}
       rw [noneStep] at nextStateSome
       contradiction
   | case2 state newState nextStep =>
+      change step.nextStep state = some newState at nextStep
       simp [iterate_next_state nextStep,
         List.getLast_cons (iterateIsNonEmpty step _)]
       rw [nextStep] at nextStateSome
@@ -221,6 +225,7 @@ lemma iterate_predecessor {state s: α}:
     simp [this]
     tauto
   | case2 state nextState nextStep ih =>
+    change step.nextStep state = some nextState at nextStep
     have := iterate_next_state nextStep
     simp_rw [this]
     simp [this]
@@ -237,7 +242,7 @@ lemma iterate_predecessor {state s: α}:
         intros a nextState_le_a a_lt_nextState
         apply global_decreasing at nextState_le_a
         have := step.decreasing a (by simp [a_lt_nextState])
-        simp only [a_lt_nextState, Option.get_some] at this
+        simp [a_lt_nextState] at this
         omega
       · specialize ih h
         obtain ⟨t, t_cond, t_uniq⟩ := ih
@@ -269,6 +274,7 @@ lemma iterate_ne_s_le_s_pred {t s s_pred state: α}:
     rw [noneStep] at s_pred_is_pred
     contradiction
   | case2 state nextState nextStep ih =>
+    change step.nextStep state = some nextState at nextStep
     have := iterate_next_state nextStep
     simp [this] at t_in_state s_in_state
     rcases t_in_state with t_eq_state | t_nextState
@@ -349,6 +355,7 @@ lemma stateStrongInduction (step: Terminator α)
     simp [this] at strong ⊢
     exact strong
   | case2 state nextState nextStep ih =>
+    change step.nextStep state = some nextState at nextStep
     have := iterate_next_state nextStep
     simp [this] at strong ⊢
     obtain ⟨strong1, strong2⟩ := strong

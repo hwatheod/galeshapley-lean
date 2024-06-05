@@ -57,10 +57,10 @@ lemma m_order'_lt_def (m: M) (w1 w2: W):
   simp [m_order'_le_def]
   omega
 
-def m_order (m: M): CompleteLinearOrder (Option W) :=
+def m_order (m: M): CompleteLinearOrder (WithBot W) :=
   let _ : Fintype (WithBot W) := inferInstanceAs (Fintype (Option W))
   let _ := @WithBot.linearOrder W (m_order' mPref m)
   Fintype.toCompleteLinearOrderOfNonempty (WithBot W)
 
-def mPref_lattice: CompleteLattice (M → Option W) :=
-  @Pi.instCompleteLattice M (fun _ => Option W) (fun m => (m_order mPref m).toCompleteLattice)
+def mPref_lattice: CompleteLattice (M → WithBot W) :=
+  @Pi.instCompleteLattice M (fun _ => WithBot W) (fun m => (m_order mPref m).toCompleteLattice)

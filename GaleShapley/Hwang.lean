@@ -28,6 +28,8 @@ lemma set_ext (α: Type u) {P Q : α → Prop}: {x | P x} = {x | Q x} ↔ ∀ x,
 open Classical GaleShapley.Iterate
 noncomputable section
 
+export WithBot (some)
+
 variable {M W: Type} [Fintype M] [Fintype W]
   (mPref: Pref M W)
   (wPref: Pref W M)
@@ -41,7 +43,7 @@ def revendicateurSpouses (matching: Matching M W): Finset W :=
 
 /- The first paragraph of the proof in Dumont. -/
 lemma revSpousesMarriedInGs (matching: Matching M W):
-    ∀ (w: revendicateurSpouses mPref wPref matching), (galeShapley mPref wPref)⁻¹ w ≠ none := by
+    ∀ (w: revendicateurSpouses mPref wPref matching), (galeShapley mPref wPref)⁻¹ w ≠ ⊥ := by
   intro w
   by_contra bad
   have := Subtype.prop w
@@ -62,7 +64,7 @@ lemma revSpousesMarriedInGs (matching: Matching M W):
    hypothesis below. -/
 def hwang_case1_hypothesis (matching: Matching M W): Prop :=
   ∃ (w: revendicateurSpouses mPref wPref matching), ∃ (m : M),
-       ¬ (revendicateur mPref wPref matching m) ∧ (galeShapley mPref wPref) m = some w
+       ¬ (revendicateur mPref wPref matching m) ∧ (galeShapley mPref wPref) m = some ↑w
 
 theorem hwangTheorem_case1 (matching: Matching M W) (h: hwang_case1_hypothesis mPref wPref matching):
     ∃ m, ∃ m', ∃ w, matching m = some w ∧ (revendicateur mPref wPref matching m) ∧
@@ -83,10 +85,10 @@ theorem hwangTheorem_case1 (matching: Matching M W) (h: hwang_case1_hypothesis m
   simp [revendicateur] at m'_nonrev m_rev
   simp [m_matches_w] at m_rev
   constructor
-  · rcases h1: matching m' with _ | w'
-    constructor
+  · cases h1: matching m'
     · simp
-    · simp
+    · case _ w' =>
+      simp
       simp [h1, m'_gs_matches_w] at m'_nonrev
       have w_ne_w': w ≠ w' := by
         by_contra bad
@@ -111,9 +113,10 @@ theorem hwangTheorem_case1 (matching: Matching M W) (h: hwang_case1_hypothesis m
     unfold isUnstablePair
     simp [m'_gs_matches_w, inverseProperty.mp m'_gs_matches_w]
     constructor
-    · rcases h2: (galeShapley mPref wPref) m with _ | w'
+    · cases h2: (galeShapley mPref wPref) m
       · simp
-      · specialize m_rev w' h2
+      · case _ w' =>
+        specialize m_rev w' h2
         simp
         exact m_rev
     · exact w_prefers_m
@@ -144,7 +147,7 @@ lemma revendicateurSpouses_gs_cardinality
     (hS': S' = { w | ∃ m, revendicateur mPref wPref matching m ∧
       galeShapley mPref wPref m = some w}.toFinset)
     (hR': R' = { r: M | revendicateur mPref wPref matching r ∧
-      galeShapley mPref wPref r ≠ none }.toFinset): R'.card = S'.card := by
+      galeShapley mPref wPref r ≠ ⊥ }.toFinset): R'.card = S'.card := by
 
   apply matching_equal_cardinality (galeShapley mPref wPref) R'
   intro r
@@ -231,7 +234,7 @@ lemma neg_hwang_case1_lemma: ¬ (hwang_case1_hypothesis mPref wPref matching) �
       have s'card: Fintype.card S' = S'.card := by exact Fintype.card_coe S'
       rw [← rcard, ← s'card]
       exact Fintype.card_le_of_injective f f_inj
-    have: ∀ (w : S'), ∃ m, revendicateur mPref wPref matching m ∧ galeShapley mPref wPref m = some w := by simp [S']
+    have: ∀ (w : S'), ∃ m, revendicateur mPref wPref matching m ∧ galeShapley mPref wPref m = some ↑w := by simp [S']
     choose f hf using this
     simp at hf
     let f_restrict := Set.codRestrict f R (by {
@@ -256,9 +259,9 @@ lemma neg_hwang_case1_lemma: ¬ (hwang_case1_hypothesis mPref wPref matching) �
 lemma all_revendicateurs_gs_married_lemma (matching: Matching M W):
     both_same_spouses_hypothesis mPref wPref matching →
     ∀ (m: M),
-        revendicateur mPref wPref matching m → galeShapley mPref wPref m ≠ none := by
+        revendicateur mPref wPref matching m → galeShapley mPref wPref m ≠ ⊥ := by
   let R := { m | revendicateur mPref wPref matching m}.toFinset
-  let R' := { r: M | revendicateur mPref wPref matching r ∧ galeShapley mPref wPref r ≠ none }.toFinset
+  let R' := { r: M | revendicateur mPref wPref matching r ∧ galeShapley mPref wPref r ≠ ⊥ }.toFinset
   intro both_same_spouses
   suffices eq: R' = R by
     intro r r_rev
@@ -310,13 +313,13 @@ theorem hwangTheorem (matching: Matching M W) (existsRevendicateur: ∃ m, reven
   · have both_same_spouses: both_same_spouses_hypothesis mPref wPref matching := by
       exact neg_hwang_case1_lemma mPref wPref h
     have all_revendicateurs_gs_married: ∀ (m: M),
-        revendicateur mPref wPref matching m → galeShapley mPref wPref m ≠ none := by
+        revendicateur mPref wPref matching m → galeShapley mPref wPref m ≠ ⊥ := by
       exact all_revendicateurs_gs_married_lemma mPref wPref matching both_same_spouses
 
     -- Let r be the last revendicateur who made a proposal
     let gsList := galeShapleyList mPref wPref
     have exists_last_rev_proposal := last_occurrence
-        (fun (state: GaleShapleyState M W) => ∃ r, revendicateur mPref wPref matching r ∧ state.matching r = none )
+        (fun (state: GaleShapleyState M W) => ∃ r, revendicateur mPref wPref matching r ∧ state.matching r = ⊥ )
         (by
           use (gsList.head (galeShapleyListNonEmpty mPref wPref))
           constructor
@@ -345,10 +348,10 @@ theorem hwangTheorem (matching: Matching M W) (existsRevendicateur: ∃ m, reven
       have := noMoreProposalsImpliesSingle mPref wPref r ⟨last_rev_proposal, h_lrp, r_unmatched, bad⟩
       exact all_revendicateurs_gs_married r r_rev this
 
-    let nextState := (galeShapleyNextStep last_rev_proposal).get (notDoneIsSome notLast)
+    let nextState := (galeShapleyNextStep last_rev_proposal).unbot (notDoneIsSome notLast)
     have nextStep: galeShapleyNextStep last_rev_proposal = some nextState := by
       unfold_let nextState
-      exact Option.eq_some_of_isSome (notDoneIsSome notLast)
+      simp
     have nextState_ne: nextState ≠ last_rev_proposal := iterate_ne_predecessor (by
       rw [← galeShapleyTerminatorNextStep] at nextStep
       exact nextStep
@@ -367,10 +370,7 @@ theorem hwangTheorem (matching: Matching M W) (existsRevendicateur: ∃ m, reven
       exact iterate_ne_predecessor (step := galeShapleyTerminator) nextStep this
 
     -- let w be r's match at the next step of the algorithm
-    let w := Option.get (nextState.matching r) (by
-      specialize tail_condition_nextState r r_rev
-      exact Option.ne_none_iff_isSome.mp tail_condition_nextState
-    )
+    let w := (nextState.matching r).unbot (tail_condition_nextState r r_rev)
 
     have w_rfl: nextState.matching r = some w := by simp [w]
 
@@ -437,9 +437,7 @@ theorem hwangTheorem (matching: Matching M W) (existsRevendicateur: ∃ m, reven
     /- Since r' ends up with w', his proposal to w' is his final proposal. -/
     have r'_final_proposeIndex: (galeShapleyFinalState mPref wPref).proposeIndex r' = last_rev_proposal.proposeIndex r' := by
       have r'_gs_matched_w'': ∃ w'', last_rev_proposal.matching r' = some w'' := by
-        by_contra bad
-        rw [← Option.ne_none_iff_exists'] at bad
-        push_neg at bad
+        cases bad: last_rev_proposal.matching r' <;> try simp
         have r_matched_next := tail_condition_nextState r r_rev
         have r'_matched_next := tail_condition_nextState r' r'_rev
         have: r' = r := by
@@ -447,7 +445,7 @@ theorem hwangTheorem (matching: Matching M W) (existsRevendicateur: ∃ m, reven
             simp_rw [nextStep]
             simpa
           )
-        exact r'_ne_r this
+        exact False.elim (r'_ne_r this)
       obtain ⟨w'', r'_gs_matched_w''⟩ := r'_gs_matched_w''
       have: w' = w'' := by
         by_contra bad
@@ -504,7 +502,7 @@ theorem hwangTheorem (matching: Matching M W) (existsRevendicateur: ∃ m, reven
       have := matching_nextState' notLast r
       simp_rw [nextStep] at this
       simp [m_ne_r, m_matched_w, pref_inv.1, pref_inv.2, r_proposer, r_proposed_to_w, w_rfl] at this
-      split_ifs at this
+      split_ifs at this <;> simp at this
       · case _ c1 =>
           simp [newMatch, curMatch, m_matched_w, pref_inv.2, r_proposer, r_proposed_to_w] at c1
           split_ifs at c1
@@ -513,7 +511,7 @@ theorem hwangTheorem (matching: Matching M W) (existsRevendicateur: ∃ m, reven
             exact m_ne_r.symm ((wPref w).symm.injective this)
           · exact False.elim (m_ne_r c1.symm)
 
-    have m_unmatched_next: nextState.matching m = none := by
+    have m_unmatched_next: nextState.matching m = ⊥ := by
       have := matchedEitherSameOrSingleNext' notLast w_penultimate_gs_match_m
       simp [nextStep] at this
       rcases this <;> tauto
@@ -535,9 +533,10 @@ theorem hwangTheorem (matching: Matching M W) (existsRevendicateur: ∃ m, reven
 
     unfold isUnstablePair
     constructor
-    · rcases h: matching m with _ | w''
+    · cases h: matching m
       · simp
-      · simp [h]
+      · case _ w'' =>
+        simp [h]
         -- w rejected m so m prefers w to his final gs match w0, whom he weak-prefers to his
         -- `matching` match w'' since m is a non-revendicateur.
         unfold revendicateur at m_notrev

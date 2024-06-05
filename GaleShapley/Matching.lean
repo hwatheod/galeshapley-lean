@@ -5,7 +5,7 @@ import Mathlib.Data.Set.Finite
   # Partial Matchings
 
   We define partial matchings from `M` to `W` as functions `f: M → Option W` which
-  are injective when restricted to the defined subset where `f(m) ≠ none`.
+  are injective when restricted to the defined subset where `f(m) ≠ ⊥`.
 
   We define the inverse matching of a matching, and introduce the notation ⁻¹ for it.
 
@@ -17,23 +17,25 @@ namespace GaleShapley
 open Classical
 noncomputable section
 
+export WithBot (some)
+
 /- the injectivity condition -/
-def isMatching (matching: M → Option W): Prop := ∀ {{m1}} {{m2}},
+def isMatching (matching: M → WithBot W): Prop := ∀ {{m1}} {{m2}},
   (∃ w, matching m2 = some w) → matching m1 = matching m2 → m1 = m2
 
 @[ext]
 structure Matching (M W: Type) where
-  matching: M → Option W
+  matching: M → WithBot W
   matchingCondition: isMatching matching
 
 /- Define a coercion from `Matching` to the underlying function -/
-instance : CoeFun (Matching M W) (fun _ ↦ M -> Option W) where
+instance : CoeFun (Matching M W) (fun _ ↦ M -> WithBot W) where
   coe := fun m => m.matching
 
 attribute [coe] Matching.matching
 
 theorem matching_coe_injective (a: Matching M W) (b: Matching M W):
-    (↑a : M → Option W) = (↑b: M → Option W) → a = b := by
+    (↑a : M → WithBot W) = (↑b: M → WithBot W) → a = b := by
   exact fun a_1 => (fun x y => (Matching.ext_iff x y).mpr) a b a_1
 
 /- Another version of injectivity which is sometimes useful -/
@@ -44,7 +46,7 @@ theorem matchingCondition' {matching: Matching M W}: ∀ {w}, matching m1 = some
 
 @[simps]
 def emptyMatching: Matching M W := {
-  matching := fun _ => none
+  matching := fun _ => ⊥
   matchingCondition := by tauto
 }
 
@@ -63,7 +65,7 @@ def matchingUniquePreimage (matching: Matching M W)
   rw [hm']
   tauto
 
-def inverseMatching' (matching: Matching W M): M → Option W :=
+def inverseMatching' (matching: Matching W M): M → WithBot W :=
   fun m =>
       let acceptedM := fun w => matching w = some m
       if h : ∃ w, acceptedM w then
@@ -74,7 +76,7 @@ def inverseMatching' (matching: Matching W M): M → Option W :=
           simp
           exact this
         ))
-      else none
+      else ⊥
 
 theorem inverseProperty' (matching: Matching M W):
     ∀ m, ∀ w, matching m = some w ↔ (inverseMatching' matching) w = (some m) := by
@@ -84,10 +86,8 @@ theorem inverseProperty' (matching: Matching M W):
     have: ∃ m, matching m = some w := by use m
     set m'Option := inverseMatching' matching w with m'Option_rfl
     simp [inverseMatching', this] at m'Option_rfl
-    rcases m'Option with _ | m'
-    tauto
+    cases h: m'Option <;> simp [h] at m'Option_rfl
 
-    simp at m'Option_rfl
     symm at m'Option_rfl
     apply Subtype.coe_eq_iff.mp at m'Option_rfl
     obtain ⟨h', _⟩ := m'Option_rfl
@@ -116,8 +116,7 @@ def inverseMatching (matching: Matching W M): Matching M W := {
     rw [h2] at h1
     apply (inverseProperty' matching w m2).mpr at h2
     apply (inverseProperty' matching w m1).mpr at h1
-    rw [h1] at h2
-    simp only [Option.some.injEq] at h2
+    simp [h1] at h2
     exact h2
 }
 
@@ -131,13 +130,13 @@ theorem inverseProperty {matching: Matching M W} {m: M} {w: W}:
   exact inverseProperty' matching m w
 
 theorem inversePropertyNone {matching: Matching M W}:
-    ∀ w, (∀ m, matching m ≠ some w) ↔ matching⁻¹ w = none := by
+    ∀ w, (∀ m, matching m ≠ some w) ↔ matching⁻¹ w = ⊥ := by
   intro w
   constructor
   · intros w_matches_none
     by_contra bad
     push_neg at bad
-    rw [Option.ne_none_iff_exists] at bad
+    rw [WithBot.ne_bot_iff_exists] at bad
     obtain ⟨m, m_matches_w⟩ := bad
     specialize w_matches_none m
     symm at m_matches_w
@@ -155,7 +154,7 @@ theorem inverseInvolution (matching: Matching M W): matching⁻¹⁻¹ = matchin
   apply matching_coe_injective
   apply funext
   intro m
-  rcases h: matching m with _ | w
+  cases h: matching m
   · rw [← inversePropertyNone m]
     intro w
     have := inverseProperty (matching := matching) (m := m) (w := w)
@@ -175,7 +174,7 @@ theorem inverseInvolution (matching: Matching M W): matching⁻¹⁻¹ = matchin
    `invMatching` is undefined outside the range of `matching`. But it is enough to
    guarantee that `matching` satisfies the injectivity condition.
  -/
-def createMatching (matching: M → Option W) (invMatching: W → Option M)
+def createMatching (matching: M → WithBot W) (invMatching: W → WithBot M)
     (invCondition: ∀ m, ∀ w, matching m = some w → invMatching w = some m): Matching M W := {
   matching := matching
   matchingCondition := by

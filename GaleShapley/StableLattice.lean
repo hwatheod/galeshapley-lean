@@ -21,12 +21,14 @@ namespace GaleShapley
 open Classical
 noncomputable section
 
+export WithBot (some)
+
 variable {M W: Type} [Fintype M] [Fintype W]
   (mPref: Pref M W)
   (wPref: Pref W M)
 
 
-def StableMatching := {f : M → Option W |
+def StableMatching := {f : M → WithBot W |
   ∃ h : isMatching f, isStableMatching mPref wPref ⟨f, h⟩}
 
 def toStableMatching (f: Matching M W) (stable: isStableMatching mPref wPref f):
@@ -116,9 +118,11 @@ def stableMatchings_infClosed:
   have stable := infMatchingStable tsm
   exact stable
 
-def mPref_stableSublattice: @Sublattice (M → Option W) (mPref_lattice mPref).toLattice :=
-  @Sublattice.mk (M → Option W) (mPref_lattice mPref).toLattice (StableMatching mPref wPref)
+def mPref_stableSublattice: @Sublattice (M → WithBot W) (mPref_lattice mPref).toLattice :=
+  @Sublattice.mk (M → WithBot W) (mPref_lattice mPref).toLattice (StableMatching mPref wPref)
   (by apply stableMatchings_supClosed) (by apply stableMatchings_infClosed)
+
+instance [Fintype α]: Fintype (WithBot α) := inferInstanceAs (Fintype (Option α))
 
 instance mPref_stableCompleteLattice: CompleteLattice (StableMatching mPref wPref) :=
   let _: Lattice (StableMatching mPref wPref) := by
@@ -161,17 +165,18 @@ lemma gsEqualsTop: gsStableMatching mPref wPref = ⊤ := by
   apply funext
   intro m
   specialize this m
-  rcases h: (galeShapley mPref wPref) m with _ | w
+  cases h: (galeShapley mPref wPref) m
   · simp [h] at this
     simp [this]
-  · simp [h] at this
-    rcases h2: (f: M → Option W) m with _ | w'
+  · case _ w =>
+    simp [h] at this
+    cases h2: (f: M → WithBot W) m
     · let _ := m_order mPref m
       simp [WithBot.none_eq_bot, max, CompleteLattice.bot_le]
-    · specialize this w' h2
+    · case _ w' =>
+      specialize this w' h2
       simp [max]
       let _ := m_order' mPref m
-      rw [WithBot.some_le_some]
       simp [m_order'_le_def]
       exact this
 
