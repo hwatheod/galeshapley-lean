@@ -2,6 +2,8 @@ import GaleShapley.Compute.Basic
 
 open GaleShapley.Compute
 
+export WithBot (some)
+
 def mPrefTable2: List ((Fin 2) ≃ (Fin 2)) :=
   [
     List.Nodup.getEquivOfForallMemList [1, 0]  (by decide) (by decide),
@@ -59,10 +61,10 @@ def wPref4: Pref W4 M4 :=
 
 def example2_matching: Matching M4 W4 := {
   matching := fun m => match m.val with
-    | 0 => some 2
-    | 1 => some 3
-    | 2 => some 0
-    | 3 => some 1
+    | 0 => WithBot.some 2
+    | 1 => WithBot.some 3
+    | 2 => WithBot.some 0
+    | 3 => WithBot.some 1
     | _ => none
   matchingCondition := by
     simp [isMatching]
@@ -74,10 +76,10 @@ def example2_matching: Matching M4 W4 := {
 -- modifying the matching from example 2 to get an unstable matching
 def example2_matching': Matching M4 W4 := {
   matching := fun m => match m.val with
-    | 0 => some 2
-    | 1 => some 0
-    | 2 => some 3
-    | 3 => some 1
+    | 0 => WithBot.some 2
+    | 1 => WithBot.some 0
+    | 2 => WithBot.some 3
+    | 3 => WithBot.some 1
     | _ => none
   matchingCondition := by
     simp [isMatching]
@@ -88,6 +90,8 @@ def example2_matching': Matching M4 W4 := {
 
 -- For BasicAlt, the n=4 case is too slow to run for some reason.
 #eval galeShapley mPref4 wPref4 0
+
+instance [ToString α]: ToString (WithBot α) := inferInstanceAs (ToString (Option α))
 
 -- main function for the 4 case.
 def main : IO Unit := do

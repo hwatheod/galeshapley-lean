@@ -1,9 +1,18 @@
 import GaleShapley.Compute.Matching
 import Mathlib.Algebra.Order.BigOperators.Group.Finset
 
+/-!
+
+# Gale-Shapley algorithm
+
+This file defines a computable version of the Gale-Shapley algorithm.
+
+-/
 namespace GaleShapley.Compute
 
 open BigOperators
+
+export WithBot (some)
 
 variable {M W: Type} [Fintype M] [Fintype W] [LinearOrder M] [DecidableEq M] [DecidableEq W]
 
@@ -22,7 +31,7 @@ structure GaleShapleyState (M W: Type) [Fintype M] [Fintype W] [LinearOrder M] [
       ∃ m', matching⁻¹ w = some m' ∧  -- m' is paired with w
         (wPref w).symm m' <= (wPref w).symm m
 
-abbrev notDone (state: GaleShapleyState M W) := ∃ m, state.matching m = none ∧ state.proposeIndex m < Fintype.card W
+abbrev notDone (state: GaleShapleyState M W) := ∃ m, state.matching m = ⊥ ∧ state.proposeIndex m < Fintype.card W
 
 def proposer {state: GaleShapleyState M W} (h: notDone state): M :=
     Finset.min' {m : M | state.matching m = none ∧ state.proposeIndex m < Fintype.card W}.toFinset
@@ -44,16 +53,16 @@ def proposee {state: GaleShapleyState M W} (h: notDone state) :=
       exact this
     )⟩
 
-def curMatch {state: GaleShapleyState M W} (h: notDone state): Option M :=
+def curMatch {state: GaleShapleyState M W} (h: notDone state): WithBot M :=
     state.matching⁻¹ (proposee h)
 
-def newMatch {state: GaleShapleyState M W} (h: notDone state) :=
+def newMatch {state: GaleShapleyState M W} (h: notDone state): M :=
     match curMatch h with
-    | none => proposer h
+    | ⊥ => proposer h
     | some m => if (state.wPref (proposee h)).symm (proposer h) ≤
         (state.wPref (proposee h)).symm m then proposer h else m
 
-def galeShapleyNextStep (state: GaleShapleyState M W): Option (GaleShapleyState M W) :=
+def galeShapleyNextStep (state: GaleShapleyState M W): WithBot (GaleShapleyState M W) :=
   if h0: notDone state then
     let m0 := proposer h0
     have m0_proposer: m0 = proposer h0 := by rfl
@@ -69,11 +78,11 @@ def galeShapleyNextStep (state: GaleShapleyState M W): Option (GaleShapleyState 
     have w0_proposee: w0 = proposee h0 := by rfl
     let w0_curMatch := curMatch h0
     let w0_newMatch := newMatch h0
-    let newMatching': M → Option W := fun m =>
+    let newMatching': M → WithBot W := fun m =>
       if m ≠ m0 ∧ w0_curMatch ≠ some m then state.matching m
       else if m = w0_newMatch then some w0
-      else none
-    let invNewMatching' : W → Option M := fun w =>
+      else ⊥
+    let invNewMatching' : W → WithBot M := fun w =>
       if w ≠ w0 then state.matching⁻¹ w else some w0_newMatch
     let newMatching := createMatching newMatching' invNewMatching' (by
       intros m w
@@ -105,13 +114,17 @@ def galeShapleyNextStep (state: GaleShapleyState M W): Option (GaleShapleyState 
         exact state.matchedLastProposed m w
       · by_cases h1': m = m0
         · simp [newMatching, newProposeIndex, h1', createMatching, newMatching']
-          intros _ c2
+          split_ifs <;> try tauto
+          simp
+          intro c2
           rw [← c2]
           simp [w0, proposee]
         · have h1'': w0_curMatch = m := by tauto
           simp [newMatching, newProposeIndex, h1', ← h1'', createMatching, newMatching']
           simp [w0_curMatch, curMatch, ← w0_proposee] at h1''
-          intros _ w_eq_w0
+          split_ifs <;> try tauto
+          simp
+          intro w_eq_w0
           rw [← w_eq_w0]
           rw [← inverseProperty] at h1''
           exact state.matchedLastProposed m w0 h1''
@@ -164,9 +177,10 @@ def galeShapleyNextStep (state: GaleShapleyState M W): Option (GaleShapleyState 
             have c2: w0_curMatch ≠ some m' := by
               by_contra bad
               simp [w0_curMatch, curMatch] at bad
-              rcases h3: (state.matching⁻¹ w0) with _ | m''
+              cases h3: (state.matching⁻¹ w0)
               · simp [w0_curMatch, curMatch, h3] at bad
-              · simp [w0_curMatch, curMatch, h3] at bad
+              · case _ m'' =>
+                simp [w0_curMatch, curMatch, h3] at bad
                 have := inverseProperty.mpr h3
                 rw [bad, w_matches_m'] at this
                 simp at this
@@ -200,7 +214,7 @@ def galeShapleyNextStep (state: GaleShapleyState M W): Option (GaleShapleyState 
       noWorseThanProposedTo := newNoWorseThanProposedTo
     }
     some newState
-  else none
+  else ⊥
 
 def galeShapleyTermination (state: GaleShapleyState M W) :=
     Fintype.card M * Fintype.card W - ∑ m : M, state.proposeIndex m
@@ -263,8 +277,8 @@ def initialState: GaleShapleyState M W := {
 def galeShapley: Matching M W := (galeShapleyFinalState (initialState mPref wPref)).matching
 
 abbrev isUnstablePair (matching: Matching M W) (m: M) (w: W): Prop :=
-  (matching m = none ∨ (mPref m).symm w < (mPref m).symm (Option.getD (matching m) w)) ∧
-  (matching⁻¹ w = none ∨ (wPref w).symm m < (wPref w).symm (Option.getD (matching⁻¹ w) m))
+  (matching m = ⊥ ∨ (mPref m).symm w < (mPref m).symm ((matching m).unbot' w)) ∧
+  (matching⁻¹ w = ⊥ ∨ (wPref w).symm m < (wPref w).symm ((matching⁻¹ w).unbot' m))
 
 abbrev isStableMatching (matching: Matching M W): Prop :=
   ∀ m, ∀ w, ¬ (isUnstablePair mPref wPref matching m w)
