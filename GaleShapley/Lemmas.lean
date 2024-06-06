@@ -304,7 +304,7 @@ lemma tailLast {state: GaleShapleyState M W}:
 lemma neverRejectedFuture {state: GaleShapleyState M W} {m: M} {w: W}:
     neverRejectedFromState state m w →
      ∀ s ∈ (galeShapleyIterate state), neverRejectedFromState s m w := by
-  induction state using (iterate.induct galeShapleyTerminator) with
+  induction state using (iterate.induct' galeShapleyTerminator) with
   | case1 state noneStep =>
     have := iterate_single_state noneStep
     simp [this]
@@ -322,7 +322,7 @@ lemma neverRejectedFuture {state: GaleShapleyState M W} {m: M} {w: W}:
 lemma proposeIndexMononicity {state state': GaleShapleyState M W} (before: state' ∈ galeShapleyIterate state):
     ∀ (m: M), state.proposeIndex m ≤ state'.proposeIndex m := by
   intro m
-  induction state using (iterate.induct galeShapleyTerminator) with
+  induction state using (iterate.induct' galeShapleyTerminator) with
   | case1 state noneStep =>
       simp [iterate_single_state noneStep] at before
       rw [before]
@@ -443,7 +443,7 @@ lemma proposeIndexInequality (m: M) (w: W):
 lemma noMoreProposalsImpliesSingle'' {state: GaleShapleyState M W}
     (unmatched: state.matching m = ⊥) (outOfProposals: state.proposeIndex m = Fintype.card W):
     ∀ s ∈ (galeShapleyIterate state), s.matching m = ⊥ ∧ s.proposeIndex m = Fintype.card W := by
-  induction state using (iterate.induct galeShapleyTerminator) with
+  induction state using (iterate.induct' galeShapleyTerminator) with
   | case1 state noneStep =>
       simp [iterate_single_state noneStep]
       exact ⟨unmatched, outOfProposals⟩
@@ -480,7 +480,7 @@ lemma changedPartnerMustBecomeSingle {m: M} {w: W} (state: GaleShapleyState M W)
     (finalPartner: ((galeShapleyIterate state).getLast (galeShapleyIterateNonEmpty _)).matching m ≠ some w):
       ∃ s ∈ (galeShapleyIterate state), s.matching m = ⊥ := by
 
-  induction state using (iterate.induct galeShapleyTerminator) with
+  induction state using (iterate.induct' galeShapleyTerminator) with
   | case1 state noneStep =>
     simp [iterate_single_state noneStep] at origPartner finalPartner
     contradiction
@@ -512,7 +512,7 @@ lemma changedPartnerIncreaseProposeIndex
       (state.matching m ≠ some w →
         ((galeShapleyIterate state).getLast (galeShapleyIterateNonEmpty _)).matching m = some w →
         state.proposeIndex m < ((galeShapleyIterate state).getLast (galeShapleyIterateNonEmpty _)).proposeIndex m) := by
-  induction state using (iterate.induct galeShapleyTerminator) with
+  induction state using (iterate.induct' galeShapleyTerminator) with
   | case1 state noneStep =>
     have := iterate_single_state noneStep
     simp [this]
@@ -546,7 +546,7 @@ lemma unchangedPartnerDidntIncreaseProposeIndex {m: M} {w: W}
     (originalPartner: state.matching m = some w)
     (finalPartner: ((galeShapleyIterate state).getLast (galeShapleyIterateNonEmpty _)).matching m = some w):
     state.proposeIndex m = ((galeShapleyIterate state).getLast (galeShapleyIterateNonEmpty _)).proposeIndex m := by
-  induction state using (iterate.induct galeShapleyTerminator) with
+  induction state using (iterate.induct' galeShapleyTerminator) with
   | case1 state noneStep =>
     have := iterate_single_state noneStep
     simp [this]
@@ -583,13 +583,12 @@ lemma rejectedEndsUpWithWorse {m: M} {w w': W}
   rw [(pref_invariant' (List.getLast_mem (galeShapleyIterateNonEmpty _))).1] at finalProposeIndex
   suffices state.proposeIndex m < ((galeShapleyIterate state).getLast (galeShapleyIterateNonEmpty _)).proposeIndex m by omega
 
-  induction state using (iterate.induct galeShapleyTerminator) with
+  induction state using (iterate.induct' galeShapleyTerminator) with
     | case1 state noneStep =>
       simp at noneStep
       rw [noneStep] at nextStateSome
       contradiction
     | case2 state nextState nextStep _ =>
-      change galeShapleyNextStep state = some nextState at nextStep
       simp at nextStep
       simp [nextStep] at nextStateSome
       rw [← nextStateSome] at w_rejects_m
@@ -609,7 +608,7 @@ lemma matchedNeverRejectedImpliesFinalMatch {state: GaleShapleyState M W}:
       (galeShapleyIterateNonEmpty _)).matching m = some w := by
   intros m_matches_w never_rejected
   unfold neverRejectedFromState at never_rejected
-  induction state using (iterate.induct galeShapleyTerminator) with
+  induction state using (iterate.induct' galeShapleyTerminator) with
   | case1 state noneStep =>
     have := iterate_single_state noneStep
     simp [this]
@@ -634,9 +633,8 @@ lemma proposedNeverRejectedImpliesFinalMatch {state: GaleShapleyState M W} (h: n
     proposedAtState h m w → neverRejectedFromState state m w →
     ((galeShapleyIterate state).getLast
       (galeShapleyIterateNonEmpty _)).matching m = some w := by
-  induction state using (iterate.induct galeShapleyTerminator) with
+  induction state using (iterate.induct' galeShapleyTerminator) with
   | case1 state noneStep =>
-    change galeShapleyTerminator.nextStep state = ⊥ at noneStep
     simp at noneStep
     apply notDoneIsSome at h
     rw [noneStep] at h

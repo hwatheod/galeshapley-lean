@@ -417,7 +417,7 @@ lemma iterate_next_state {state: GaleShapleyState M W} (nextStep: galeShapleyNex
 
 lemma pref_invariant' {state: GaleShapleyState M W}:
     ∀ {{s}}, s ∈ galeShapleyIterate state → s.mPref = state.mPref ∧ s.wPref = state.wPref := by
-  induction state using (iterate.induct galeShapleyTerminator) with
+  induction state using (iterate.induct' galeShapleyTerminator) with
   | case1 state noneStep =>
       have single_state := iterate_single_state noneStep
       rw [single_state]
@@ -449,7 +449,7 @@ lemma wPref_invariant: (galeShapleyFinalState mPref wPref).wPref = wPref :=
 lemma finalStateHasNoNextStep': ∀ state: (GaleShapleyState M W),
     galeShapleyNextStep ((galeShapleyIterate state).getLast (galeShapleyIterateNonEmpty state)) = ⊥ := by
   intro state
-  induction state using (iterate.induct galeShapleyTerminator) with
+  induction state using (iterate.induct' galeShapleyTerminator) with
   | case1 state noneStep =>
       simp_rw [iterate_single_state noneStep]
       simpa

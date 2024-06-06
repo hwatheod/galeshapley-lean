@@ -47,6 +47,12 @@ decreasing_by
   simp [h] at this
   exact this
 
+lemma iterate.induct' {α : Type} (step : Terminator α) (motive : α → Prop)
+    (case1 : ∀ (x : α), step.nextStep x = ⊥ → motive x)
+    (case2 : ∀ (x newState : α), step.nextStep x = some newState → motive newState → motive x) (state : α) :
+    motive state := by
+  exact iterate.induct step motive case1 case2 state
+
 lemma iterateIsNonEmpty (step: Terminator α) (state: α):
     iterate step state ≠ [] := by
   unfold iterate
@@ -73,13 +79,12 @@ lemma decreasing_nextStepSome {step: Terminator α} (nextStep: step.nextStep sta
 
 lemma global_decreasing {step: Terminator α} {s state: α}
     (h: s ∈ iterate step state): step.termination s ≤ step.termination state := by
-  induction state using (iterate.induct step) with
+  induction state using (iterate.induct' step) with
 | case1 state noneStep =>
   have := iterate_single_state noneStep
   simp [this] at h
   simp [h]
 | case2 state nextState nextStep ih =>
-  change step.nextStep state = some nextState at nextStep
   have := iterate_next_state nextStep
   simp [this] at h
   rcases h with s_state | s_next
@@ -92,7 +97,7 @@ lemma global_decreasing {step: Terminator α} {s state: α}
 lemma termination_injective {step: Terminator α} {state s t: α}
     (hs: s ∈ iterate step state) (ht: t ∈ iterate step state)
     (eq: step.termination s = step.termination t): s = t := by
-  induction state using (iterate.induct step) with
+  induction state using (iterate.induct' step) with
   | case1 state noneStep =>
     have := iterate_single_state noneStep
     rw [this] at hs ht
@@ -137,7 +142,7 @@ lemma iterateAntisymmetry {step: Terminator α} {state s t: α}
 
 lemma iterateTransitivity {s t u: α}
     (h1: t ∈ iterate step s) (h2: u ∈ iterate step t): u ∈ iterate step s := by
-  induction s using (iterate.induct step) with
+  induction s using (iterate.induct' step) with
   | case1 s noneStep =>
     have := iterate_single_state noneStep
     simp [this] at h1 ⊢
@@ -177,12 +182,11 @@ lemma iterate_nextStateLastIsSame {state: α}
     (nextStateSome: step.nextStep state = some nextState):
     (iterate step state).getLast (iterateIsNonEmpty step state) =
     (iterate step nextState).getLast (iterateIsNonEmpty step _) := by
-  induction state using (iterate.induct step) with
+  induction state using (iterate.induct' step) with
   | case1 state noneStep =>
       rw [noneStep] at nextStateSome
       contradiction
   | case2 state newState nextStep =>
-      change step.nextStep state = some newState at nextStep
       simp [iterate_next_state nextStep,
         List.getLast_cons (iterateIsNonEmpty step _)]
       rw [nextStep] at nextStateSome
@@ -202,7 +206,7 @@ lemma iterateTailLast {state: α}:
       (iterate step state).getLast (iterateIsNonEmpty step state) =
       (iterate step s).getLast (iterateIsNonEmpty step s) := by
   intro s s_in_state
-  induction state using (iterate.induct step) with
+  induction state using (iterate.induct' step) with
   | case1 state noneStep =>
       have single_state := iterate_single_state noneStep
       simp_rw [single_state] at s_in_state ⊢
@@ -219,13 +223,12 @@ lemma iterateTailLast {state: α}:
 
 lemma iterate_predecessor {state s: α}:
     s ∈ iterate step state → s ≠ state → ∃! t ∈ iterate step state, step.nextStep t = some s := by
-  induction state using (iterate.induct step) with
+  induction state using (iterate.induct' step) with
   | case1 state noneStep =>
     have := iterate_single_state noneStep
     simp [this]
     tauto
   | case2 state nextState nextStep ih =>
-    change step.nextStep state = some nextState at nextStep
     have := iterate_next_state nextStep
     simp_rw [this]
     simp [this]
@@ -266,7 +269,7 @@ lemma iterate_ne_s_le_s_pred {t s s_pred state: α}:
     t ∈ iterate step state → s_pred ∈ iterate step state →
     t ≠ s → step.nextStep s_pred = some s → s ∈ iterate step t → s_pred ∈ iterate step t := by
   intros t_in_state s_in_state t_ne_s s_pred_is_pred t_le_s
-  induction state using (iterate.induct step) with
+  induction state using (iterate.induct' step) with
   | case1 state noneStep =>
     have := iterate_single_state noneStep
     simp [this] at t_in_state s_in_state
@@ -274,7 +277,6 @@ lemma iterate_ne_s_le_s_pred {t s s_pred state: α}:
     rw [noneStep] at s_pred_is_pred
     contradiction
   | case2 state nextState nextStep ih =>
-    change step.nextStep state = some nextState at nextStep
     have := iterate_next_state nextStep
     simp [this] at t_in_state s_in_state
     rcases t_in_state with t_eq_state | t_nextState
@@ -305,7 +307,7 @@ lemma iterate_ne_s_le_s_pred {t s s_pred state: α}:
 lemma last_occurrence {step: Terminator α} {state: α} (P: α → Prop)
     (ex: ∃ s ∈ iterate step state, P s):
     ∃ s ∈ iterate step state, P s ∧ ∀ t ∈ iterate step s, t ≠ s → ¬ P t := by
-  induction state using (iterate.induct step) with
+  induction state using (iterate.induct' step) with
   | case1 state noneStep =>
     have := iterate_single_state noneStep
     simp [this] at ex ⊢
@@ -326,9 +328,9 @@ lemma stateInduction (step: Terminator α)
     (state: α) (P: α → Prop)
     (base: P state)
     (weak: ∀ s ∈ iterate step state,
-        (nd: (step.nextStep s).isSome) → P s → P ((step.nextStep s).get nd)):
+        (nd: step.nextStep s ≠ ⊥) → P s → P ((step.nextStep s).unbot nd)):
     ∀ s ∈ iterate step state, P s := by
-  induction state using (iterate.induct step) with
+  induction state using (iterate.induct' step) with
   | case1 state noneStep =>
     have := iterate_single_state noneStep
     simp [this] at weak ⊢
@@ -349,13 +351,12 @@ lemma stateStrongInduction (step: Terminator α)
         (∀ t ∈ iterate step state, s ≠ t ∧
           s ∈ iterate step t → P t) → P s)):
     ∀ s ∈ iterate step state, P s := by
-  induction state using (iterate.induct step) with
+  induction state using (iterate.induct' step) with
   | case1 state noneStep =>
     have := iterate_single_state noneStep
     simp [this] at strong ⊢
     exact strong
   | case2 state nextState nextStep ih =>
-    change step.nextStep state = some nextState at nextStep
     have := iterate_next_state nextStep
     simp [this] at strong ⊢
     obtain ⟨strong1, strong2⟩ := strong
