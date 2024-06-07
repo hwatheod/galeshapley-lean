@@ -120,6 +120,14 @@ def galeShapleyNextStep (state: GaleShapleyState M W): WithBot (GaleShapleyState
       · case _ c1 c2 c3 =>
         exact fun a ↦ False.elim (c3 (id (Eq.symm a)))
     )
+    have newMatch_options: w0_newMatch = m0 ∨ w0_newMatch = w0_curMatch := by
+      simp only [w0_newMatch, newMatch]
+      split <;> try (left; exact m0_proposer.symm)
+      split_ifs
+      · left; exact m0_proposer.symm
+      · right; simp [w0_curMatch];
+        case _ c1 c2 c3 c4 =>
+        exact c3.symm
     have inv_is_inv: newMatching⁻¹ = invNewMatching' := by
       apply funext
       intro w
@@ -127,45 +135,39 @@ def galeShapleyNextStep (state: GaleShapleyState M W): WithBot (GaleShapleyState
       split_ifs
       · case _ w_eq_w0 =>
         rw [← inverseProperty]
-        simp only [createMatching, ne_eq, curMatch, ← w0_proposee, newMatch, ← m0_proposer,
-          ↓reduceIte, w_eq_w0, ite_eq_right_iff, and_imp, newMatching, newMatching', w0_curMatch,
-          w0_newMatch]
-        cases state.matching⁻¹ w0 <;> simp
-        · split_ifs <;> try (intros _ _ _; contradiction)
-          intro
-          omega
+        simp [w_eq_w0, newMatching, createMatching, newMatching']
+        have := newMatch_options
+        rcases this with h | h <;> simp [h]
       · case _ w_ne_w0 =>
         cases h: state.matching⁻¹ w
         · rw [← inversePropertyNone] at h ⊢
           intro m
-          simp only [createMatching, ne_eq, curMatch, ← w0_proposee, newMatch, ← m0_proposer,
-            newMatching, newMatching', w0_curMatch, w0_newMatch]
-          cases state.matching⁻¹ w0  <;> (
-            split_ifs <;> try simp only [WithBot.coe_inj, WithBot.bot_ne_coe, not_false_eq_true]
-            · exact h m
-            · push_neg at w_ne_w0; exact w_ne_w0.symm
-          )
+          simp [w_ne_w0, newMatching, createMatching, newMatching']
+          split_ifs <;> try contradiction
+          · exact h m
+          · push_neg at w_ne_w0; simp; exact w_ne_w0.symm
+          · exact WithBot.bot_ne_coe
         · case _ m =>
           rw [← inverseProperty] at h ⊢
-          simp only [createMatching, ne_eq, curMatch, ← w0_proposee, newMatch, ← m0_proposer,
-            newMatching, newMatching', w0_curMatch, w0_newMatch]
-          cases h2: state.matching⁻¹ w0 <;> simp
-          · split_ifs
-            · case _ m_eq_m0 =>
-              rw [m_eq_m0, hm0.1] at h
-              contradiction
-            · exact h
-          · case _ m' =>
-            simp only [h, ite_eq_left_iff, not_and, Decidable.not_not]
-            split_ifs <;> (
-              intro c1
-              by_cases h3: m = m0
-              · rw [h3, hm0.1] at h
-                contradiction
-              · rw [c1 h3, ← inverseProperty, h] at h2
-                simp only [WithBot.coe_inj] at h2
-                contradiction
-            )
+          have: m ≠ m0 := by
+            by_contra m_eq_m0
+            rw [m_eq_m0, hm0.1] at h
+            contradiction
+          simp [w_ne_w0, newMatching, createMatching, newMatching']
+          split_ifs <;> try assumption
+          · case _ c1 c2 =>
+            set_option push_neg.use_distrib true in push_neg at c1
+            rcases c1
+            · contradiction
+            · case _ c3 =>
+              simp [w0_curMatch, curMatch, ← inverseProperty] at c3
+              rw [c3] at h
+              exact h
+          · case _ c3 c4 =>
+            simp [this] at c3
+            simp [w0_curMatch, curMatch, ← inverseProperty] at c3
+            simp [h, ← w0_proposee] at c3
+            contradiction
     let newProposeIndex := fun m =>
       if m ≠ m0 then state.proposeIndex m else state.proposeIndex m + 1
     have newBound: ∀ m, newProposeIndex m ≤ Fintype.card W := by
@@ -197,14 +199,6 @@ def galeShapleyNextStep (state: GaleShapleyState M W): WithBot (GaleShapleyState
           rw [← w_eq_w0]
           rw [← inverseProperty] at h1''
           exact state.matchedLastProposed m w0 h1''
-    have newMatch_options: w0_newMatch = m0 ∨ w0_newMatch = w0_curMatch := by
-      simp only [w0_newMatch, newMatch]
-      split <;> try (left; exact m0_proposer.symm)
-      split_ifs
-      · left; exact m0_proposer.symm
-      · right; simp [w0_curMatch];
-        case _ c1 c2 c3 c4 =>
-        exact c3.symm
     have newNoWorseThanProposedTo:
         ∀ m, ∀ w, (state.mPref m).symm w < newProposeIndex m →     -- m proposed to w
           ∃ m', newMatching⁻¹ w = some m' ∧  -- m' is paired with w
