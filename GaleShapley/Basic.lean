@@ -84,6 +84,7 @@ def rejectedAtState {state: GaleShapleyState M W} (h: notDone state) (m: M) (w: 
 /- This is a key definition. It implements one iteration of the algorithm and proves that
    the invariants are preserved.
  -/
+--set_option trace.profiler true in
 def galeShapleyNextStep (state: GaleShapleyState M W): WithBot (GaleShapleyState M W) :=
   if h0: notDone state then
     let hm0' := Classical.choose_spec h0
@@ -105,7 +106,7 @@ def galeShapleyNextStep (state: GaleShapleyState M W): WithBot (GaleShapleyState
     let newMatching := createMatching newMatching' invNewMatching' (by
       intros m w
       simp [newMatching', invNewMatching']
-      split_ifs <;> ((try simp); (try tauto))
+      split_ifs <;> try simp
       · case _ h1 h2 =>
         rw [h2]
         intro m_matches_w0
@@ -114,6 +115,10 @@ def galeShapleyNextStep (state: GaleShapleyState M W): WithBot (GaleShapleyState
           simp [w0_curMatch, curMatch, this]
         exact False.elim (h1.2 this)
       · exact inverseProperty.mp
+      · case _ c1 c2 c3 =>
+        exact fun _ ↦ id (Eq.symm c2)
+      · case _ c1 c2 c3 =>
+        exact fun a ↦ False.elim (c3 (id (Eq.symm a)))
     )
     have inv_is_inv: newMatching⁻¹ = invNewMatching' := by
       apply funext
@@ -122,40 +127,43 @@ def galeShapleyNextStep (state: GaleShapleyState M W): WithBot (GaleShapleyState
       split_ifs
       · case _ w_eq_w0 =>
         rw [← inverseProperty]
-        simp [w_eq_w0, newMatching, createMatching, newMatching', w0_newMatch, newMatch,
-          ← m0_proposer, ← w0_proposee, w0_curMatch, curMatch]
-        rcases state.matching⁻¹ w0 with _ | m <;> simp
-        · split_ifs <;> tauto
+        simp only [createMatching, ne_eq, curMatch, ← w0_proposee, newMatch, ← m0_proposer,
+          ↓reduceIte, w_eq_w0, ite_eq_right_iff, and_imp, newMatching, newMatching', w0_curMatch,
+          w0_newMatch]
+        cases state.matching⁻¹ w0 <;> simp
+        · split_ifs <;> try (intros _ _ _; contradiction)
           intro
           omega
       · case _ w_ne_w0 =>
         cases h: state.matching⁻¹ w
         · rw [← inversePropertyNone] at h ⊢
           intro m
-          simp [w_ne_w0, newMatching, createMatching, newMatching', w0_newMatch, newMatch,
-            ← m0_proposer, ← w0_proposee, w0_curMatch, curMatch]
-          rcases h2: state.matching⁻¹ w0 with _ | m' <;> (
-            simp
-            split_ifs <;> ((try simp); try tauto)
+          simp only [createMatching, ne_eq, curMatch, ← w0_proposee, newMatch, ← m0_proposer,
+            newMatching, newMatching', w0_curMatch, w0_newMatch]
+          cases state.matching⁻¹ w0  <;> (
+            split_ifs <;> try simp only [WithBot.coe_inj, WithBot.bot_ne_coe, not_false_eq_true]
+            · exact h m
+            · push_neg at w_ne_w0; exact w_ne_w0.symm
           )
         · case _ m =>
           rw [← inverseProperty] at h ⊢
-          simp [w_ne_w0, newMatching, createMatching, newMatching', w0_newMatch, newMatch,
-            ← m0_proposer, ← w0_proposee, w0_curMatch, curMatch]
+          simp only [createMatching, ne_eq, curMatch, ← w0_proposee, newMatch, ← m0_proposer,
+            newMatching, newMatching', w0_curMatch, w0_newMatch]
           cases h2: state.matching⁻¹ w0 <;> simp
-          · split_ifs <;> ((try simp); try tauto)
-            case _ m_eq_m0 =>
-            rw [m_eq_m0, hm0.1] at h
-            contradiction
+          · split_ifs
+            · case _ m_eq_m0 =>
+              rw [m_eq_m0, hm0.1] at h
+              contradiction
+            · exact h
           · case _ m' =>
-            simp [h]
+            simp only [h, ite_eq_left_iff, not_and, Decidable.not_not]
             split_ifs <;> (
               intro c1
               by_cases h3: m = m0
               · rw [h3, hm0.1] at h
                 contradiction
               · rw [c1 h3, ← inverseProperty, h] at h2
-                simp at h2
+                simp only [WithBot.coe_inj] at h2
                 contradiction
             )
     let newProposeIndex := fun m =>
@@ -175,7 +183,7 @@ def galeShapleyNextStep (state: GaleShapleyState M W): WithBot (GaleShapleyState
         exact state.matchedLastProposed m w
       · by_cases h1': m = m0
         · simp [newMatching, newProposeIndex, h1', createMatching, newMatching']
-          split_ifs <;> try tauto
+          split_ifs <;> try (intro _; contradiction)
           simp
           intro c2
           rw [← c2]
@@ -183,7 +191,7 @@ def galeShapleyNextStep (state: GaleShapleyState M W): WithBot (GaleShapleyState
         · have h1'': w0_curMatch = m := by tauto
           simp [newMatching, newProposeIndex, h1', ← h1'', createMatching, newMatching']
           simp [w0_curMatch, curMatch, ← w0_proposee] at h1''
-          split_ifs <;> try tauto
+          split_ifs <;> try (intro _; contradiction)
           simp
           intro w_eq_w0
           rw [← w_eq_w0]
@@ -191,8 +199,12 @@ def galeShapleyNextStep (state: GaleShapleyState M W): WithBot (GaleShapleyState
           exact state.matchedLastProposed m w0 h1''
     have newMatch_options: w0_newMatch = m0 ∨ w0_newMatch = w0_curMatch := by
       simp only [w0_newMatch, newMatch]
-      split <;> tauto
-      split_ifs <;> tauto
+      split <;> try (left; exact m0_proposer.symm)
+      split_ifs
+      · left; exact m0_proposer.symm
+      · right; simp [w0_curMatch];
+        case _ c1 c2 c3 c4 =>
+        exact c3.symm
     have newNoWorseThanProposedTo:
         ∀ m, ∀ w, (state.mPref m).symm w < newProposeIndex m →     -- m proposed to w
           ∃ m', newMatching⁻¹ w = some m' ∧  -- m' is paired with w
@@ -216,7 +228,7 @@ def galeShapleyNextStep (state: GaleShapleyState M W): WithBot (GaleShapleyState
             simp [proposee, ← m0_proposer] at w0_proposee
             simp_rw [← eq] at w0_proposee
             simp at w0_proposee
-            tauto
+            exact h1 ⟨h2, w0_proposee.symm⟩
         have := state.noWorseThanProposedTo m w prev
         by_cases h2: w ≠ w0
         · obtain ⟨m', w_matches_m', w_prefers_m'⟩ := this
