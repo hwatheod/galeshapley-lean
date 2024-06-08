@@ -327,7 +327,7 @@ theorem hwangTheorem (matching: Matching M W) (existsRevendicateur: ∃ m, reven
           · simp [gsList]
             exact existsRevendicateur
     )
-    simp at exists_last_rev_proposal
+    simp only [galeShapleyIterate_rfl, galeShapleyList_rfl, ne_eq, not_exists, not_and] at exists_last_rev_proposal
 
     set last_rev_proposal := choose exists_last_rev_proposal with last_rev_proposal_rfl
     have last_rev_proposal_property := choose_spec exists_last_rev_proposal
@@ -501,10 +501,11 @@ theorem hwangTheorem (matching: Matching M W) (existsRevendicateur: ∃ m, reven
     have w_prefers_r_to_m: (wPref w).symm r < (wPref w).symm m := by
       have := matching_nextState' notLast r
       simp_rw [nextStep] at this
-      simp [m_ne_r, m_matched_w, pref_inv.1, pref_inv.2, r_proposer, r_proposed_to_w, w_rfl] at this
+      simp only [WithBot.unbot_coe, w_rfl, r_proposer, ne_eq, not_true_eq_false, false_and,
+        ↓reduceIte, r_proposed_to_w] at this
       split_ifs at this <;> simp at this
       · case _ c1 =>
-          simp [newMatch, curMatch, m_matched_w, pref_inv.2, r_proposer, r_proposed_to_w] at c1
+          simp only [newMatch, curMatch, r_proposed_to_w, m_matched_w, pref_inv.2, r_proposer] at c1
           split_ifs at c1
           · by_contra bad
             have: (wPref w).symm r = (wPref w).symm m := by omega
@@ -514,22 +515,22 @@ theorem hwangTheorem (matching: Matching M W) (existsRevendicateur: ∃ m, reven
     have m_unmatched_next: nextState.matching m = ⊥ := by
       have := matchedEitherSameOrSingleNext' notLast w_penultimate_gs_match_m
       simp [nextStep] at this
-      rcases this <;> tauto
-      case _ c1 =>
-      have := matchingCondition' c1 w_rfl
-      contradiction
+      rcases this
+      · case _ c1 => exact c1
+      · case _ c1 =>
+        have := matchingCondition' c1 w_rfl
+        contradiction
 
     have m_notrev: ¬ (revendicateur mPref wPref matching m) := by
       by_contra bad
       rcases h: (galeShapley mPref wPref) m with _ | w''
       · have := all_revendicateurs_gs_married m bad
-        contradiction
+        exact this h
       · exact tail_condition_nextState m bad m_unmatched_next
 
     /- Show that (m, w) is the unstable pair we are looking for. Note that w is the spouse
        in `matching` of the revendicateur r'. -/
-    exists r', m, w
-    refine ⟨r'_matches_w, r'_rev, m_notrev, ?_⟩
+    refine ⟨r', m, w, r'_matches_w, r'_rev, m_notrev, ?_⟩
 
     unfold isUnstablePair
     constructor
@@ -566,16 +567,17 @@ theorem hwangTheorem (matching: Matching M W) (existsRevendicateur: ∃ m, reven
           (most preferred) r, m, m0, r' (least preferred)
       -/
       have noWorse_ineq := last_rev_proposal.noWorseThanProposedTo r' w
-      simp [pref_inv.1, pref_inv.2] at noWorse_ineq
+      simp only [pref_inv.1, pref_inv.2] at noWorse_ineq
       have: ((mPref r').symm w) < last_rev_proposal.proposeIndex r' := by
-        rwa [r'_final_proposeIndex] at r'_proposed_w
+        rw [r'_final_proposeIndex] at r'_proposed_w
+        exact r'_proposed_w
       specialize noWorse_ineq this
-      simp [m_matched_w] at noWorse_ineq
+      simp only [m_matched_w, WithBot.coe_inj, exists_eq_left'] at noWorse_ineq
       by_contra bad
       have: (wPref w).symm m = (wPref w).symm r' := by omega
       have := ((wPref w).symm.injective this)
       rw [this] at m_notrev
-      contradiction
+      exact m_notrev r'_rev
 
 -- An alternate proof of the proposer optimality theorem
 theorem proposerOptimal' (matching: Matching M W) (stable: isStableMatching mPref wPref matching):
