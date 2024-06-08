@@ -84,7 +84,6 @@ def rejectedAtState {state: GaleShapleyState M W} (h: notDone state) (m: M) (w: 
 /- This is a key definition. It implements one iteration of the algorithm and proves that
    the invariants are preserved.
  -/
---set_option trace.profiler true in
 def galeShapleyNextStep (state: GaleShapleyState M W): WithBot (GaleShapleyState M W) :=
   if h0: notDone state then
     let hm0' := Classical.choose_spec h0
@@ -154,7 +153,8 @@ def galeShapleyNextStep (state: GaleShapleyState M W): WithBot (GaleShapleyState
             rw [m_eq_m0, hm0.1] at h
             contradiction
           simp [w_ne_w0, newMatching, createMatching, newMatching']
-          split_ifs <;> try assumption
+          split_ifs
+          · exact h
           · case _ c1 c2 =>
             set_option push_neg.use_distrib true in push_neg at c1
             rcases c1
@@ -185,30 +185,39 @@ def galeShapleyNextStep (state: GaleShapleyState M W): WithBot (GaleShapleyState
         exact state.matchedLastProposed m w
       · by_cases h1': m = m0
         · simp [newMatching, newProposeIndex, h1', createMatching, newMatching']
-          split_ifs <;> try (intro _; contradiction)
-          simp
-          intro c2
-          rw [← c2]
-          simp [w0, proposee]
-        · have h1'': w0_curMatch = m := by tauto
+          split_ifs
+          · simp
+            intro c2
+            rw [← c2]
+            simp [w0, proposee]
+          · intro
+            contradiction
+        · have h1'': w0_curMatch = m := by
+            set_option push_neg.use_distrib true in push_neg at h1
+            rcases h1 with c1 | c2
+            · exact False.elim (h1' c1)
+            · exact c2
           simp [newMatching, newProposeIndex, h1', ← h1'', createMatching, newMatching']
           simp [w0_curMatch, curMatch, ← w0_proposee] at h1''
-          split_ifs <;> try (intro _; contradiction)
-          simp
-          intro w_eq_w0
-          rw [← w_eq_w0]
-          rw [← inverseProperty] at h1''
-          exact state.matchedLastProposed m w0 h1''
+          split_ifs
+          · simp
+            intro w_eq_w0
+            rw [← w_eq_w0]
+            rw [← inverseProperty] at h1''
+            exact state.matchedLastProposed m w0 h1''
+          . intro
+            contradiction
     have newNoWorseThanProposedTo:
         ∀ m, ∀ w, (state.mPref m).symm w < newProposeIndex m →     -- m proposed to w
           ∃ m', newMatching⁻¹ w = some m' ∧  -- m' is paired with w
             (state.wPref w).symm m' <= (state.wPref w).symm m := by
       intros m w
       by_cases h1: m = m0 ∧ w = w0
-      · simp [inv_is_inv, h1, invNewMatching', newProposeIndex]
+      · simp only [h1, ne_eq, ite_not, ↓reduceIte, inv_is_inv, WithBot.coe_inj, exists_eq_left',
+        newProposeIndex, invNewMatching']
         intro
         rcases newMatch_options with cond | cond <;> try (simp [cond])
-        simp [w0_newMatch, newMatch, m0, w0]
+        simp only [newMatch, w0, w0_newMatch, m0]
         split <;> rw [← m0_proposer]; split <;> omega
       · intro lt_newProposeIndex
         have prev: (state.mPref m).symm w < state.proposeIndex m := by
@@ -231,14 +240,15 @@ def galeShapleyNextStep (state: GaleShapleyState M W): WithBot (GaleShapleyState
           · simpa [inv_is_inv, h2, invNewMatching']
           · exact w_prefers_m'
         · push_neg at h2
-          simp [inv_is_inv, h2, invNewMatching']
+          simp only [h2, inv_is_inv, ne_eq, ite_not, ↓reduceIte, WithBot.coe_inj, exists_eq_left',
+            ge_iff_le, invNewMatching']
           rw [h2] at this
           obtain ⟨m'', w0_matches_m'', w0_prefers_m''⟩ := this
           have: m'' = w0_curMatch := by
             simp [w0_curMatch, curMatch, w0_matches_m'']
           simp [w0_curMatch] at this
           suffices (state.wPref w0).symm w0_newMatch ≤ (state.wPref w0).symm m'' by omega
-          simp [w0_newMatch, newMatch, ← m0_proposer, ← w0_proposee, ← this]
+          simp only [newMatch, ← this, ← w0_proposee, ← m0_proposer, w0_newMatch]
           split_ifs <;> omega
     let newState := {
       mPref := state.mPref
