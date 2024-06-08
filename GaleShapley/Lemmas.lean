@@ -340,7 +340,7 @@ lemma proposeIndexInequality' (state: GaleShapleyState M W) (m: M) (w: W)
       proposedAtState nd m w) ↔
         ↑((mPref m).symm w) < state.proposeIndex m := by
   have := stateStrongInduction galeShapleyTerminator (initialState mPref wPref)
-  simp at this
+  simp only [galeShapleyIterate_rfl, galeShapleyList_rfl, ne_eq, and_imp] at this
   revert h_state
   specialize this (fun state => ((∃ s ∈ galeShapleyList mPref wPref, ∃ (nd : notDone s),
     s ≠ state ∧ state ∈ galeShapleyIterate s ∧ proposedAtState nd m w) ↔
@@ -365,7 +365,7 @@ lemma proposeIndexInequality' (state: GaleShapleyState M W) (m: M) (w: W)
         omega
       simp only [this, iff_true]
       obtain ⟨t, ht, nd, _, t_before_s_pred, m_proposed_w_earlier⟩ := ih
-      exists t, ht, nd
+      refine ⟨t, ht, nd, ?_⟩
       simp [m_proposed_w_earlier]
       have := iterateNextState s_pred_is_pred
       constructor
@@ -405,13 +405,14 @@ lemma proposeIndexInequality' (state: GaleShapleyState M W) (m: M) (w: W)
           specialize ih t ht nd t_ne_s_pred
             (iterate_ne_s_le_s_pred ht h_s_pred t_ne_s s_pred_is_pred t_before_s)
           exact False.elim (ih m_proposed_w_earlier)
-        · split_ifs <;> tauto
-          case _ m_proposer =>
-          intro propose_ineq
-          have: (mPref m).symm w = s_pred.proposeIndex m := by omega
-          unfold proposedAtState at h3
-          simp [← m_proposer, proposee,
-            (pref_invariant' h_s_pred).1, ← this] at h3
+        · split_ifs
+          · case _ m_proposer =>
+            intro propose_ineq
+            have: (mPref m).symm w = s_pred.proposeIndex m := by omega
+            unfold proposedAtState at h3
+            simp [← m_proposer, proposee,
+              (pref_invariant' h_s_pred).1, ← this] at h3
+          · simp only [h2, ne_eq, exists_and_left, false_implies]
 
 lemma proposeIndexInequality (m: M) (w: W):
     proposed mPref wPref m w ↔
@@ -708,7 +709,7 @@ lemma rejectedByPreferred {state: GaleShapleyState M W}
       state ∈ galeShapleyIterate s ∧ s ≠ state ∧ rejectedAtState nd_s m w' := by
   revert h_state
   apply stateStrongInduction galeShapleyTerminator (initialState mPref wPref)
-  simp
+  simp only [galeShapleyIterate_rfl, galeShapleyList_rfl, ne_eq, exists_and_left, and_imp]
   intros s hs ih w' m_prefers_w'
 
   by_cases h: s = initialState mPref wPref
@@ -756,7 +757,7 @@ lemma rejectedByPreferred {state: GaleShapleyState M W}
             simp [← m_proposed, this, (pref_invariant' h_s_pred).1]
           have := proposerRemainsSingleImpliesRejected s_pred_is_pred m_proposed h3
           unfold rejectedAtState
-          tauto
+          exact ⟨w'_proposee, this⟩
         · case _ m_not_proposed =>
           rw [s_proposeIndex] at m_prefers_w'
           omega
