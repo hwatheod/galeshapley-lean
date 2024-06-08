@@ -39,7 +39,7 @@ lemma neverRejectedByPossibleMatch' (state: GaleShapleyState M W) (m: M) (w: W):
         ¬ rejectedAtState nd m w := by
   intro state_in_gsList
   have := stateStrongInduction galeShapleyTerminator (initialState mPref wPref)
-  simp at this
+  simp only [galeShapleyIterate_rfl, galeShapleyList_rfl, ne_eq, and_imp] at this
   specialize this (fun state => ∀ m w, possibleMatch mPref wPref m w →
       ∀ s ∈ galeShapleyList mPref wPref, ∀ (nd : notDone s),
         state ∈ galeShapleyIterate s → ¬rejectedAtState nd m w)
@@ -76,28 +76,34 @@ lemma neverRejectedByPossibleMatch' (state: GaleShapleyState M W) (m: M) (w: W):
       · left
         unfold proposedAtState
         exact ⟨m'_proposed, w_proposee⟩
-      · tauto
+      · right
+        exact m'_matched.symm
     have w_prefers_m': (wPref w).symm m' < (wPref w).symm m := by
       simp [newMatch, (pref_invariant' h_rjs).2, w_proposee] at m'_rfl
       split at m_rejectee
       · case _ m'_curMatch =>
         simp at m_rejectee
         simp [m'_curMatch, m_rejectee] at m'_rfl
-        split at m'_rfl <;> try contradiction
-        omega
+        split at m'_rfl
+        · exact False.elim (m'_ne_m m'_rfl)
+        · omega
       · simp [m_rejectee] at m'_rfl
-        rcases m'_proposed_or_matched with m'_proposed | m'_matched <;> try contradiction
-        unfold proposedAtState at m'_proposed
-        rw [← m'_proposed.1] at m'_rfl
-        split at m'_rfl <;> try contradiction
-        by_contra
-        have: (wPref w).symm m' = (wPref w).symm m := by omega
-        exact m'_ne_m (Equiv.injective (wPref w).symm this)
+        rcases m'_proposed_or_matched with m'_proposed | m'_matched
+        · unfold proposedAtState at m'_proposed
+          rw [← m'_proposed.1] at m'_rfl
+          split at m'_rfl
+          · by_contra
+            have: (wPref w).symm m' = (wPref w).symm m := by omega
+            exact m'_ne_m (Equiv.injective (wPref w).symm this)
+          . exact False.elim (m'_ne_m m'_rfl)
+        · case _ c1 =>
+          exact False.elim (c1 m'_matched)
     have: isUnstablePair mPref wPref matching m' w := by
       unfold isUnstablePair
       simp [inverseProperty.mp m_matches_w, w_prefers_m']
       cases h: matching m'
-      · tauto  -- m' single in matching, we are done
+      · left
+        rfl
       · case _ w' =>
         simp
         have w'_ne_w: w' ≠ w := by
