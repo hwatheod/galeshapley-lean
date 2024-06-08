@@ -421,16 +421,16 @@ lemma supMatchingClosed (tsm: TwoStableMatchings M W):
     have := mPref_lattice tsm.mPref
     isMatching (tsm.f ⊔ tsm.g) := by
 
-  simp [Pi.sup_def, sup_eq_max]
+  simp only [Pi.sup_def, sup_eq_max]
 
   unfold isMatching
-  simp
+  simp only [forall_exists_index]
   intros m1 m2
   let _ := m_order tsm.mPref m2
   wlog h2: tsm.f m2 ≤ tsm.g m2 generalizing tsm
   · have gf: tsm.g m2 ≤ tsm.f m2 := le_of_not_ge h2
     specialize this (fg tsm) gf
-    simp at this
+    simp only [fg_f, fg_g] at this
     rw [max_comm] at this
     let _ := m_order tsm.mPref m1
     rwa [max_comm] at this
@@ -445,7 +445,7 @@ lemma supMatchingClosed (tsm: TwoStableMatchings M W):
     · case _ wg2 =>
       cases hf1: (tsm.f m1)
       · have: tsm.g m1 = ⊥ := (sameSinglesM tsm m1).mp hf1
-        simp [hf2, hg2, hf1, this] at m2_matches_w m1_eq_m2
+        simp only [hf2, hg2, hf1, this] at m2_matches_w m1_eq_m2
         let _ := m_order tsm.mPref m1
         simp [m2_matches_w] at m1_eq_m2
       · case _ wf1 =>
@@ -454,7 +454,7 @@ lemma supMatchingClosed (tsm: TwoStableMatchings M W):
           simp [this] at hf1
         · -- the real proof starts here
           case _ wg1 =>
-          simp [hf2, hg2, hf1, hg1] at m2_matches_w m1_eq_m2 h2
+          simp only [hf2, hg2, hf1, hg1, WithBot.coe_le_coe] at m2_matches_w m1_eq_m2 h2
           rw [m2_matches_w] at m1_eq_m2
 
           simp [h2] at m2_matches_w
