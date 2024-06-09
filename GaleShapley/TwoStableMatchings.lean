@@ -297,26 +297,27 @@ lemma tsm_f_restrict_injective: Function.Injective (tsm_f_restrict tsm) := by
 lemma tsm_g_restrict_injective: Function.Injective (tsm_g_restrict tsm) := by
   have := tsm_f_restrict_injective (mw (fg tsm))
   unfold tsm_g_restrict
-  simp [Function.Injective, Subtype.val_inj] at this ⊢
+  simp only [Function.Injective, all_m_prefer_f_mw_fg, Subtype.forall, Subtype.mk.injEq,
+    Subtype.val_inj] at this ⊢
   exact this
 
 lemma two_sets_eq_cardinality: (all_m_prefer_f tsm).card = (all_w_prefer_g tsm).card := by
   have f_to_g := Fintype.card_le_of_injective (tsm_f_restrict tsm) (tsm_f_restrict_injective tsm)
   have g_to_f := Fintype.card_le_of_injective (tsm_g_restrict tsm) (tsm_g_restrict_injective tsm)
-  simp at f_to_g g_to_f
+  simp only [Fintype.card_coe] at f_to_g g_to_f
   omega
 
 lemma tsm_f_restrict_bijective: Function.Bijective (tsm_f_restrict tsm) := by
   rw [Fintype.bijective_iff_injective_and_card]
   constructor
   · exact tsm_f_restrict_injective tsm
-  · simp [two_sets_eq_cardinality]
+  · simp only [Fintype.card_coe, two_sets_eq_cardinality]
 
 lemma tsm_g_restrict_bijective: Function.Bijective (tsm_g_restrict tsm) := by
   rw [Fintype.bijective_iff_injective_and_card]
   constructor
   · exact tsm_g_restrict_injective tsm
-  · simp [two_sets_eq_cardinality]
+  · simp only [Fintype.card_coe, two_sets_eq_cardinality]
 
 lemma tsm_f_restrict_surjective: ∀ w ∈ all_w_prefer_g tsm, ∃ m, m_prefers_f tsm m ∧
     tsm.f m = some w := by
