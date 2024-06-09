@@ -167,11 +167,13 @@ lemma becameSingleImpliesRejected {state: GaleShapleyState M W} {m: M}
   have := matching_nextState' nd m
   have m_not_propose := didNotPropose nd m_matched_before
   simp [nextStateSome, m_matched_before, m_unmatched_after, m_not_propose] at this
-  split_ifs at this <;> try tauto
-  case _ m_eq_curMatch m_not_newMatch =>
-  simp [rejectee, m_eq_curMatch, m_not_newMatch]
-  simp [curMatch, ← inverseProperty] at m_eq_curMatch
-  exact m_eq_curMatch
+  split_ifs at this
+  · tauto
+  · case _ m_eq_curMatch m_not_newMatch =>
+    simp [rejectee, m_eq_curMatch, m_not_newMatch]
+    simp [curMatch, ← inverseProperty] at m_eq_curMatch
+    exact m_eq_curMatch
+  · tauto
 
 lemma proposerRemainsSingleImpliesRejected {state: GaleShapleyState M W} {m: M}
     (nextStateSome: galeShapleyNextStep state = some nextState)
@@ -180,19 +182,26 @@ lemma proposerRemainsSingleImpliesRejected {state: GaleShapleyState M W} {m: M}
     rejectee (nextStateSomeIsNotDone nextStateSome) = some m := by
   have := matching_nextState nextStateSome m
   simp [m_unmatched_after] at this
-  split_ifs at this <;> tauto
-  case _ _ m_ne_newMatch =>
-  unfold rejectee
-  cases h: curMatch (nextStateSomeIsNotDone nextStateSome) <;> simp [h]
-  · simp [newMatch, h] at m_ne_newMatch
-    tauto
-  · case _ m' =>
-    rw [← m_proposed]
-    split_ifs <;> tauto
-    have := newMatch_choices (nextStateSomeIsNotDone nextStateSome)
-    rw [← m_proposed, h] at this
-    simp at this
-    tauto
+  split_ifs at this
+  · tauto
+  · tauto
+  · case _ _ m_ne_newMatch =>
+    unfold rejectee
+    cases h: curMatch (nextStateSomeIsNotDone nextStateSome) <;> simp [h]
+    · simp [newMatch, h] at m_ne_newMatch
+      tauto
+    · case _ m' =>
+      rw [← m_proposed]
+      split_ifs
+      · rfl
+      · case _ m'_ne_newMatch =>
+        have := newMatch_choices (nextStateSomeIsNotDone nextStateSome)
+        rw [← m_proposed, h] at this
+        simp at this
+        push_neg at m_ne_newMatch m'_ne_newMatch
+        symm at m_ne_newMatch
+        symm at m'_ne_newMatch
+        rcases this <;> contradiction
 
 lemma curMatchedNextStepDidntIncreaseProposeIndex' {state: GaleShapleyState M W} {m: M}
     (h: notDone state)
@@ -643,7 +652,8 @@ lemma proposedNeverRejectedImpliesFinalMatch {state: GaleShapleyState M W} (h: n
   | case2 state nextState nextStep _ =>
     unfold proposedAtState neverRejectedFromState
     simp_rw [iterate_next_state nextStep]
-    simp [List.getLast_cons (galeShapleyIterateNonEmpty _)]
+    simp only [List.mem_cons, forall_eq_or_imp, List.getLast_cons (galeShapleyIterateNonEmpty _),
+      and_imp]
 
     intros m_proposer w_proposee not_rejected_now
     specialize not_rejected_now h
@@ -663,10 +673,13 @@ lemma proposedNeverRejectedImpliesFinalMatch {state: GaleShapleyState M W} (h: n
     case _ m_not_newMatch =>
     have := newMatch_choices h
     rw [← m_proposer] at this
-    rcases this <;> try tauto
-    case _ cur_eq_new =>
-    unfold rejectee at not_rejected_now
-    simp [← m_proposer, ← cur_eq_new] at not_rejected_now
+    rcases this
+    · case _ m_eq_newMatch =>
+      symm at m_eq_newMatch
+      tauto
+    · case _ cur_eq_new =>
+      unfold rejectee at not_rejected_now
+      simp [← m_proposer, ← cur_eq_new] at not_rejected_now
 
 lemma singleImpliesRejectedByAll (m_single: galeShapley mPref wPref m = ⊥):
     ∀ w, ∃ state ∈ galeShapleyList mPref wPref, ∃ (h: notDone state),
