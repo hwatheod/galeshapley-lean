@@ -124,19 +124,8 @@ set_option linter.unusedVariables false in
 lemma iterateHead (step: Terminator α) (state: α):
     (iterate step state).head (iterateIsNonEmpty step state) = state := by
   unfold iterate
-  let motive := fun x => (match h: x with
-    | none => [state]
-    | some newState => state :: iterate step newState).head (by split <;> simp) = state
-  by_cases h: step.nextStep state = ⊥
-  · have: motive (step.nextStep state) = motive none := by rw [h]
-    simp [motive] at this
-    exact this
-  · push_neg at h
-    rw [WithBot.ne_bot_iff_exists] at h
-    obtain ⟨newState, nextStep⟩ := h
-    have: motive (step.nextStep state) = motive ↑newState := by rw [← nextStep]
-    simp [motive] at this
-    exact this
+  generalize_proofs p
+  split at p <;> rfl
 
 lemma iterateReflexivity (step: Terminator α) (state: α):
     state ∈ iterate step state := by

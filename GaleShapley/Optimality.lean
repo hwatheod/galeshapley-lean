@@ -245,7 +245,6 @@ theorem receiverPessimal (matching: Matching M W) (stable: isStableMatching mPre
     unfold isStableMatching at stable
     specialize stable m w
     unfold isUnstablePair at stable
-    unfold_let at stable
     set_option push_neg.use_distrib true in push_neg at stable
     rw [w_matches_m'] at stable
     simp at stable
