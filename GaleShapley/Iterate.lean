@@ -120,7 +120,6 @@ lemma termination_injective {step: Terminator α} {state s t: α}
         omega
       · exact ih s_next t_next
 
-set_option linter.unusedVariables false in
 lemma iterateHead (step: Terminator α) (state: α):
     (iterate step state).head (iterateIsNonEmpty step state) = state := by
   unfold iterate
