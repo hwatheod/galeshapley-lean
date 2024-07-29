@@ -379,7 +379,7 @@ lemma asymmetric_preference_g' {m: M} {w: W} (hg: tsm.g m = some w):
 /- Gale and Sotomayor's result that the same people are single in all stable matchings.
    This is sometimes called the bachelor or bachelorette theorem. This is the second
    theorem in Dumont section 1.3. -/
-def sameSinglesM (m: M): tsm.f m = ⊥ ↔ tsm.g m = ⊥ := by
+lemma sameSinglesM (m: M): tsm.f m = ⊥ ↔ tsm.g m = ⊥ := by
   suffices ∀ (tsm: TwoStableMatchings M W) (m: M), tsm.g m = ⊥ → tsm.f m = ⊥ by
     constructor
     · exact this (fg tsm) m
@@ -402,7 +402,7 @@ def sameSinglesM (m: M): tsm.f m = ⊥ ↔ tsm.g m = ⊥ := by
   rw [m_g_matches_w'] at m_g_unmatched
   contradiction
 
-def sameSinglesW (w: W): tsm.f⁻¹ w = ⊥ ↔ tsm.g⁻¹ w = ⊥ :=
+lemma sameSinglesW (w: W): tsm.f⁻¹ w = ⊥ ↔ tsm.g⁻¹ w = ⊥ :=
   sameSinglesM (mw tsm) w
 
 /- Now we prove several lemmas to establish Conway's result that stable matchings
