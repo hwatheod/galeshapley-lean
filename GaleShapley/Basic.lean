@@ -205,7 +205,7 @@ def galeShapleyNextStep (state: GaleShapleyState M W): WithBot (GaleShapleyState
             rw [← w_eq_w0]
             rw [← inverseProperty] at h1''
             exact state.matchedLastProposed m w0 h1''
-          . intro
+          · intro
             contradiction
     have newNoWorseThanProposedTo:
         ∀ m, ∀ w, (state.mPref m).symm w < newProposeIndex m →     -- m proposed to w

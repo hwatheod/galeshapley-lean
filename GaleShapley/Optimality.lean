@@ -95,7 +95,7 @@ lemma neverRejectedByPossibleMatch' (state: GaleShapleyState M W) (m: M) (w: W):
           · by_contra
             have: (wPref w).symm m' = (wPref w).symm m := by omega
             exact m'_ne_m (Equiv.injective (wPref w).symm this)
-          . exact False.elim (m'_ne_m m'_rfl)
+          · exact False.elim (m'_ne_m m'_rfl)
         · case _ c1 =>
           exact False.elim (c1 m'_matched)
     have: isUnstablePair mPref wPref matching m' w := by

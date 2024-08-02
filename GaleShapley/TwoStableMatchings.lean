@@ -87,7 +87,7 @@ lemma isUnstableEquiv (mPref: Pref M W) (wPref: Pref W M)
   · cases h: matching m
     · cases matching⁻¹ w
       · simp
-      . simp [WithBot.coe_lt_coe, m_order'_lt_def]
+      · simp [WithBot.coe_lt_coe, m_order'_lt_def]
     · simp [h]
       cases matching⁻¹ w
       · simp [WithBot.coe_lt_coe, m_order'_lt_def]
@@ -568,7 +568,7 @@ lemma supMatching_inverse_lemma:
         rw [bad] at w_g
         exact lt_irrefl _ w_g
       exact False.elim (this ((sameSinglesW tsm w).mp h3))
-    . case _ m =>
+    · case _ m =>
       have := asymmetric_preference_f' tsm (inverseProperty.mpr h3) w_g
       rw [← inverseProperty] at h3 ⊢
       have := supMatching_mf tsm m this
