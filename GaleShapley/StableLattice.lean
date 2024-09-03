@@ -39,7 +39,6 @@ def toMatching (f: StableMatching mPref wPref): Matching M W := {
   matchingCondition := by
     have := f.property
     unfold StableMatching at this
-    simp at this
     obtain ⟨h, _⟩ := this
     exact h
 }

@@ -14,6 +14,8 @@ variable {M W: Type} [Fintype M] [Fintype W]
 
 namespace GaleShapley
 
+set_option linter.unusedSectionVars false
+
 open Classical
 noncomputable section
 
@@ -35,8 +37,8 @@ instance : CoeFun (Matching M W) (fun _ ↦ M -> WithBot W) where
 attribute [coe] Matching.matching
 
 theorem matching_coe_injective (a: Matching M W) (b: Matching M W):
-    (↑a : M → WithBot W) = (↑b: M → WithBot W) → a = b := by
-  exact fun a_1 => (fun x y => (Matching.ext_iff x y).mpr) a b a_1
+    (↑a : M → WithBot W) = (↑b: M → WithBot W) → a = b :=
+  Matching.ext
 
 /- Another version of injectivity which is sometimes useful -/
 theorem matchingCondition' {matching: Matching M W}: ∀ {w}, matching m1 = some w → matching m2 = some w → m1 = m2 := by

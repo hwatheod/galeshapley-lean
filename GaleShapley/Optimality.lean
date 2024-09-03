@@ -20,6 +20,8 @@ import GaleShapley.Lemmas
 -/
 namespace GaleShapley
 
+set_option deprecated.oldSectionVars true
+
 open Classical GaleShapley.Iterate
 noncomputable section
 

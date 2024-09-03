@@ -24,6 +24,8 @@ import Mathlib.Algebra.Order.Ring.Nat
 -/
 namespace GaleShapley.Iterate
 
+set_option deprecated.oldSectionVars true
+
 variable {α: Type} [Inhabited α]
 
 export WithBot (some)
@@ -128,8 +130,8 @@ lemma iterateHead (step: Terminator α) (state: α):
 
 lemma iterateReflexivity (step: Terminator α) (state: α):
     state ∈ iterate step state := by
-  rw (config := {occs := .pos [1]}) [← iterateHead step state]
-  exact List.head_mem (iterateIsNonEmpty step state)
+  have := List.head_mem (iterateIsNonEmpty step state)
+  rwa [iterateHead step state] at this
 
 lemma iterateAntisymmetry {step: Terminator α} {state s t: α}
     (hs: s ∈ iterate step state) (ht: t ∈ iterate step state)
