@@ -45,11 +45,11 @@ def m_order' (m: M): LinearOrder W where
   decidableLE := inferInstance
 
 lemma m_order'_le_def (m: M) (w1 w2: W):
-    let ord := m_order' mPref m
+    let _ := m_order' mPref m
     w1 ≤ w2 ↔ (mPref m).symm w1 ≥ (mPref m).symm w2 := by rfl
 
 lemma m_order'_lt_def (m: M) (w1 w2: W):
-    let ord := m_order' mPref m
+    let _ := m_order' mPref m
   w1 < w2 ↔ (mPref m).symm w1 > (mPref m).symm w2 := by
   let ord := m_order' mPref m
   simp

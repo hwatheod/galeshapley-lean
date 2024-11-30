@@ -350,7 +350,7 @@ theorem hwangTheorem (matching: Matching M W) (existsRevendicateur: ∃ m, reven
 
     let nextState := (galeShapleyNextStep last_rev_proposal).unbot (notDoneIsSome notLast)
     have nextStep: galeShapleyNextStep last_rev_proposal = some nextState := by
-      unfold_let nextState
+      unfold nextState
       simp
     have nextState_ne: nextState ≠ last_rev_proposal := iterate_ne_predecessor (by
       rw [← galeShapleyTerminatorNextStep] at nextStep

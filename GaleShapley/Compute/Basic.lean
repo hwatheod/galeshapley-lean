@@ -1,5 +1,7 @@
 import GaleShapley.Compute.Matching
 import Mathlib.Algebra.Order.BigOperators.Group.Finset
+import Mathlib.Data.Finset.Max
+import Mathlib.Tactic.ApplyFun
 
 /-!
 
@@ -130,7 +132,7 @@ def galeShapleyNextStep (state: GaleShapleyState M W): WithBot (GaleShapleyState
           exact state.matchedLastProposed m w0 h1''
     have newMatch_options: w0_newMatch = m0 ∨ w0_newMatch = w0_curMatch := by
       simp only [w0_newMatch, newMatch]
-      split <;> tauto
+      split <;> try tauto
       split_ifs <;> tauto
     have newNoWorseThanProposedTo:
         ∀ m, ∀ w, (state.mPref m).symm w < newProposeIndex m →     -- m proposed to w

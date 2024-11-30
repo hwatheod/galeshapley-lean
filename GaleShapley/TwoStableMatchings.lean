@@ -2,6 +2,7 @@ import GaleShapley.Matching
 import GaleShapley.Basic
 import GaleShapley.GeneralLattice
 import Mathlib.Order.Lattice
+import Mathlib.Tactic.ApplyFun
 
 /-!
 
@@ -422,7 +423,7 @@ lemma supMatchingClosed (tsm: TwoStableMatchings M W):
     have := mPref_lattice tsm.mPref
     isMatching (tsm.f ⊔ tsm.g) := by
 
-  simp only [Pi.sup_def, sup_eq_max]
+  simp only [Pi.sup_def]
 
   unfold isMatching
   simp only [forall_exists_index]
@@ -541,7 +542,7 @@ lemma supMatching_inverse_lemma:
     (supMatching tsm)⁻¹ = tsm.f⁻¹.matching ⊓ tsm.g⁻¹.matching := by
   apply funext
   intro w
-  simp [Pi.inf_def, inf_eq_min]
+  simp only [Pi.inf_def]
   let _ := m_order tsm.wPref w
 
   wlog h2: tsm.f⁻¹ w ≤ tsm.g⁻¹ w
@@ -581,7 +582,8 @@ lemma supMatching_inverse_lemma:
       intro m
       specialize h m
       specialize h3 m
-      simp [supMatching, Pi.sup_def, sup_eq_max]
+      simp only [supMatching, Pi.sup_def]
+      let _ := m_order tsm.mPref m  -- for some reason, moving this above "simp only" fails
       by_contra bad
       simp [max_def] at bad
       split_ifs at bad <;> contradiction
@@ -589,7 +591,7 @@ lemma supMatching_inverse_lemma:
       rw [h3] at h
       symm at h
       rw [← inverseProperty] at h h3 ⊢
-      simp [supMatching, Pi.sup_def, sup_eq_max]
+      simp only [supMatching, Pi.sup_def]
       rw [h, h3]
       simp
 

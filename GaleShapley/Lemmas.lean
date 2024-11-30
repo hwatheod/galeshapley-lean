@@ -1,5 +1,6 @@
 import GaleShapley.Matching
 import GaleShapley.Basic
+import Mathlib.Tactic.ApplyFun
 
 /-!
 
@@ -32,7 +33,7 @@ def neverRejectedFromState (state: GaleShapleyState M W) (m: M) (w: W) :=
 lemma newMatch_choices {state: GaleShapleyState M W} (h: notDone state):
     newMatch h = choose h ∨ newMatch h = curMatch h := by
   simp only [newMatch]
-  split <;> tauto
+  split <;> try tauto
   split_ifs <;> tauto
 
 lemma didNotPropose {state: GaleShapleyState M W} (h: notDone state)
@@ -245,7 +246,7 @@ lemma matchedEitherSameOrSingleNext' {state: GaleShapleyState M W}
   have mDidNotPropose := didNotPropose h (by rw [m_matched_before]; simp)
   have nextState := matching_nextState' h m
   simp [m_matched_before] at nextState
-  split_ifs at nextState <;> tauto
+  split_ifs at nextState <;> try tauto
   case _ _ m_eq_curMatch m_eq_newMatch =>
   simp [mDidNotPropose] at m_eq_curMatch
   have := curMatch_lemma h m_eq_curMatch

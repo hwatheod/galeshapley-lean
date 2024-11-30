@@ -1,4 +1,4 @@
-import Mathlib.Data.Set.Finite
+import Mathlib.Data.Set.Finite.Basic
 
 namespace GaleShapley.Compute
 

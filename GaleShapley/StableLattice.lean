@@ -149,7 +149,7 @@ lemma gsEqualsTop: gsStableMatching mPref wPref = ⊤ := by
   simp
   let _ := mPref_lattice mPref
   conv_rhs => change ↑(gsStableMatching mPref wPref) ⊔ ↑f
-  simp [Pi.sup_def, sup_eq_max]
+  simp [Pi.sup_def]
 
   let f_matching := toMatching mPref wPref f
   let f_stable := toStableCondition mPref wPref f
@@ -158,8 +158,7 @@ lemma gsEqualsTop: gsStableMatching mPref wPref = ⊤ := by
   have := proposerOptimal mPref wPref f_matching f_stable
   unfold gsStableMatching toStableMatching
   simp
-  unfold_let f_matching at this
-  unfold toMatching at this
+  unfold f_matching toMatching at this
   simp at this
   apply funext
   intro m
@@ -171,10 +170,10 @@ lemma gsEqualsTop: gsStableMatching mPref wPref = ⊤ := by
     simp [h] at this
     cases h2: (f: M → WithBot W) m
     · let _ := m_order mPref m
-      simp [WithBot.none_eq_bot, max, CompleteLattice.bot_le]
+      simp [WithBot.none_eq_bot, max_def, CompleteLattice.bot_le]
     · case _ w' =>
       specialize this w' h2
-      simp [max]
+      simp [max_def]
       let _ := m_order' mPref m
       simp [m_order'_le_def]
       exact this
