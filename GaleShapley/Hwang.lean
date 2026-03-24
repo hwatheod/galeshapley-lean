@@ -81,7 +81,7 @@ theorem hwangTheorem_case1 (matching: Matching M W) (h: hwang_case1_hypothesis m
     rw [bad] at m_rev
     contradiction
   unfold isUnstablePair
-  simp [m_matches_w, inverseProperty.mp m_matches_w]
+  simp [inverseProperty.mp m_matches_w]
   simp [revendicateur] at m'_nonrev m_rev
   simp [m_matches_w] at m_rev
   constructor
@@ -111,7 +111,7 @@ theorem hwangTheorem_case1 (matching: Matching M W) (h: hwang_case1_hypothesis m
     suffices isUnstablePair mPref wPref (galeShapley mPref wPref) m w by
       exact galeShapleyNoUnstablePair mPref wPref this
     unfold isUnstablePair
-    simp [m'_gs_matches_w, inverseProperty.mp m'_gs_matches_w]
+    simp [inverseProperty.mp m'_gs_matches_w]
     constructor
     · cases h2: (galeShapley mPref wPref) m
       · simp
@@ -193,7 +193,7 @@ lemma neg_hwang_case1_lemma: ¬ (hwang_case1_hypothesis mPref wPref matching) �
   let S := { w | ∃ m, revendicateur mPref wPref matching m ∧ matching m = some w}.toFinset
   suffices S = S' by (
     simp only [S, S'] at this
-    apply_fun (fun x => x.toSet) at this
+    apply_fun (fun x => SetLike.coe x) at this
     simp at this
     apply (set_ext W).mp
     exact this.symm
@@ -250,7 +250,7 @@ lemma neg_hwang_case1_lemma: ¬ (hwang_case1_hypothesis mPref wPref matching) �
     simp [f_restrict, Set.codRestrict] at s1_eq_s2
     rw [s1_eq_s2, hf2] at hf1
     simp at hf1
-    exact SetCoe.ext hf1.symm
+    exact hf1.symm
   omega
 
 /- An auxillary lemma stating that all revendicateurs are married in `galeShapley` (under the
@@ -537,7 +537,7 @@ theorem hwangTheorem (matching: Matching M W) (existsRevendicateur: ∃ m, reven
     · cases h: matching m
       · simp
       · case _ w'' =>
-        simp [h]
+        simp
         -- w rejected m so m prefers w to his final gs match w0, whom he weak-prefers to his
         -- `matching` match w'' since m is a non-revendicateur.
         unfold revendicateur at m_notrev

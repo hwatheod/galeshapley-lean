@@ -1,5 +1,7 @@
 import GaleShapley.Compute.Matching
 import Mathlib.Algebra.Order.BigOperators.Group.Finset
+import Mathlib.Data.Finset.Max
+import Mathlib.Tactic.ApplyFun
 
 namespace GaleShapley.Compute
 
@@ -42,8 +44,8 @@ def galeShapleyNextStep (state: GaleShapleyState M W): WithBot (GaleShapleyState
       if h : proposalsToConsider w = {} then ⊥ else
         let indices := (state.wPref w).invFun '' (proposalsToConsider w)
         let min_index := Finset.min' indices.toFinset (by
-          simp only [Set.coe_setOf, Equiv.invFun_as_coe, Set.coe_toFinset, Set.toFinset_image,
-            Set.mem_setOf_eq, Finset.image_nonempty, Set.toFinset_nonempty, indices]
+          simp only [Equiv.invFun_as_coe, Set.toFinset_image,
+            Finset.image_nonempty, Set.toFinset_nonempty, indices]
           rw [Set.nonempty_iff_ne_empty]
           simp
           exact h
@@ -51,11 +53,10 @@ def galeShapleyNextStep (state: GaleShapleyState M W): WithBot (GaleShapleyState
         some (state.wPref w min_index)
     have: ∀ m, ∀ w, acceptedProposals' w = some m → state.matching m = some w ∨ newProposals m = some w := by
       intros m w w_acceptsM
-      simp only [Set.coe_setOf, Set.mem_setOf_eq, Equiv.invFun_as_coe, Set.coe_toFinset,
-        Set.toFinset_image, acceptedProposals'] at w_acceptsM
+      simp only [Equiv.invFun_as_coe, Set.toFinset_image, acceptedProposals'] at w_acceptsM
       by_cases h : proposalsToConsider w = ∅
-      · simp only [h, ↓reduceDite, WithBot.bot_ne_coe] at w_acceptsM
-      · simp only [h, ↓reduceDite, Finset.toFinset_coe, WithBot.coe_inj] at w_acceptsM
+      · simp only [h, reduceDIte, WithBot.bot_ne_coe] at w_acceptsM
+      · simp [h, reduceDIte, Finset.toFinset_coe, WithBot.coe_inj] at w_acceptsM
         have: m ∈ proposalsToConsider w := by
           apply_fun (state.wPref w).symm at w_acceptsM
           simp at w_acceptsM
@@ -64,7 +65,7 @@ def galeShapleyNextStep (state: GaleShapleyState M W): WithBot (GaleShapleyState
             exact Finset.min'_mem _ _
           simp at this
           exact this
-        simp [proposalsToConsider, h] at this
+        simp [proposalsToConsider] at this
         exact Or.symm this
     let acceptedProposals: Matching W M := {
       matching := acceptedProposals'
@@ -138,7 +139,7 @@ def galeShapleyNextStep (state: GaleShapleyState M W): WithBot (GaleShapleyState
       use m''
       constructor
       · exact w_accepted_m''.symm
-      · simp [acceptedProposals', proposalsNonempty] at w_accepted_m''
+      · simp [acceptedProposals, acceptedProposals', proposalsNonempty] at w_accepted_m''
         apply_fun (state.wPref w).symm at w_accepted_m''
         simp at w_accepted_m''
         rw [w_accepted_m'']
@@ -209,8 +210,6 @@ termination_by
 decreasing_by
   let mCard := Fintype.card M
   let wCard := Fintype.card W
-  -- This is copied from simp_wf, but as a simp only since otherwise it takes forever
-  simp only [InvImage, WellFoundedRelation.rel, Prod.Lex, Nat.lt_wfRel, sizeOf_nat, Nat.lt_eq]
   have totalBound: ∑ m, newState.proposeIndex m ≤ mCard * wCard := by
     apply Finset.sum_le_card_nsmul
     intro x
@@ -219,7 +218,7 @@ decreasing_by
   have increasing: ∑ m, newState.proposeIndex m > ∑ m, state.proposeIndex m := by
     change galeShapleyNextStep state = some newState at h
     simp only [galeShapleyNextStep, ge_iff_le, ite_eq_right_iff, dite_eq_left_iff, not_le,
-      imp_false, not_lt, Set.toFinset_setOf, Set.mem_setOf_eq, Equiv.invFun_as_coe,
+      Set.toFinset_setOf, Equiv.invFun_as_coe,
       Finset.coe_union, Finset.coe_filter, Finset.mem_univ, true_and, Set.toFinset_image,
       Set.toFinset_union] at h
     split_ifs at h with cond <;> simp at h
@@ -234,8 +233,7 @@ decreasing_by
     obtain ⟨i, hi, hi2, hi3⟩ := cond
     use i
     have hi' : ¬ Fintype.card W ≤ state.proposeIndex i := by omega
-    simp only [Finset.mem_univ, hi, hi', imp_false, not_true_eq_false, ↓reduceIte,
-      lt_add_iff_pos_right, zero_lt_one, and_self]
+    grind
 
   generalize mCard * wCard = a at totalBound increasing ⊢
   generalize ∑ m : M, state.proposeIndex m = b at totalBound increasing ⊢
@@ -295,7 +293,7 @@ lemma pref_invariant' {state: GaleShapleyState M W}:
         exact ih
       )
       simp [galeShapleyNextStep] at nextStep
-      split_ifs at nextStep with h <;> simp [h] at nextStep
+      split_ifs at nextStep with h <;> simp at nextStep
       apply_fun (fun x => (x.mPref, x.wPref)) at nextStep
       simp at nextStep
       exact nextStep
@@ -337,9 +335,9 @@ lemma unmatchedExhaustedProposals: ∀ m, galeShapley mPref wPref m = ⊥ →
   have := finalStateHasNoNextStep mPref wPref
   unfold galeShapleyNextStep at this
   simp only [ge_iff_le, mPref_invariant, ite_eq_right_iff, dite_eq_left_iff, not_le,
-    WithBot.coe_ne_bot, imp_false, not_lt, wPref_invariant, Set.toFinset_setOf, Set.mem_setOf_eq,
+    WithBot.coe_ne_bot, imp_false, not_lt, wPref_invariant, Set.toFinset_setOf,
     Equiv.invFun_as_coe, Finset.coe_union, Finset.coe_filter, Finset.mem_univ, true_and,
-    Set.toFinset_image, Set.toFinset_union, not_forall, Classical.not_imp, not_exists, not_and] at this
+    Set.toFinset_image, Set.toFinset_union, not_forall, not_exists] at this
   intros m m_unmatched
   specialize this m m_unmatched
   have := (galeShapleyFinalState mPref wPref).bound m
@@ -347,8 +345,8 @@ lemma unmatchedExhaustedProposals: ∀ m, galeShapley mPref wPref m = ⊥ →
 
 @[reducible]
 def isUnstablePair (matching: Matching M W) (m: M) (w: W): Prop :=
-  (matching m = ⊥ ∨ (mPref m).symm w < (mPref m).symm ((matching m).unbot' w)) ∧
-  (matching⁻¹ w = ⊥ ∨ (wPref w).symm m < (wPref w).symm ((matching⁻¹ w).unbot' m))
+  (matching m = ⊥ ∨ (mPref m).symm w < (mPref m).symm ((matching m).unbotD w)) ∧
+  (matching⁻¹ w = ⊥ ∨ (wPref w).symm m < (wPref w).symm ((matching⁻¹ w).unbotD m))
 
 @[reducible]
 def isStableMatching (matching: Matching M W): Prop :=

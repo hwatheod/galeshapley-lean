@@ -44,7 +44,6 @@ def iterate (step: Terminator α) (state: α) : List α :=
 termination_by
   step.termination state
 decreasing_by
-  simp_wf
   have := step.decreasing state (by simp [h])
   simp [h] at this
   exact this
@@ -233,7 +232,7 @@ lemma iterate_predecessor {state s: α}:
   | case2 state nextState nextStep ih =>
     have := iterate_next_state nextStep
     simp_rw [this]
-    simp [this]
+    simp
     intro s_options
     rcases s_options with s_state | s_next
     · tauto

@@ -28,6 +28,7 @@ variable {M W: Type} [Fintype M] [Fintype W]
   (mPref: Pref M W)
   (wPref: Pref W M)
 
+@[implicit_reducible]
 def m_order' (m: M): LinearOrder W where
   le := fun w1 w2 => (mPref m).symm w1 ≥ (mPref m).symm w2  -- this is intentionally reversed
   le_refl := by simp
@@ -42,7 +43,7 @@ def m_order' (m: M): LinearOrder W where
   le_total := by
     simp
     exact fun a b => LinearOrder.le_total ((mPref m).symm b) ((mPref m).symm a)
-  decidableLE := inferInstance
+  toDecidableLE := inferInstance
 
 lemma m_order'_le_def (m: M) (w1 w2: W):
     let _ := m_order' mPref m
@@ -53,14 +54,16 @@ lemma m_order'_lt_def (m: M) (w1 w2: W):
   w1 < w2 ↔ (mPref m).symm w1 > (mPref m).symm w2 := by
   let ord := m_order' mPref m
   simp
-  rw [lt_iff_le_not_le]
+  rw [lt_iff_le_not_ge]
   simp [m_order'_le_def]
   omega
 
+@[implicit_reducible]
 def m_order (m: M): CompleteLinearOrder (WithBot W) :=
   let _ : Fintype (WithBot W) := inferInstanceAs (Fintype (Option W))
   let _ := @WithBot.linearOrder W (m_order' mPref m)
   Fintype.toCompleteLinearOrderOfNonempty (WithBot W)
 
+@[implicit_reducible]
 def mPref_lattice: CompleteLattice (M → WithBot W) :=
   @Pi.instCompleteLattice M (fun _ => WithBot W) (fun m => (m_order mPref m).toCompleteLattice)

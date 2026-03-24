@@ -170,10 +170,10 @@ lemma gsEqualsTop: gsStableMatching mPref wPref = ⊤ := by
     simp [h] at this
     cases h2: (f: M → WithBot W) m
     · let _ := m_order mPref m
-      simp [WithBot.none_eq_bot, max_def, CompleteLattice.bot_le]
+      simp
     · case _ w' =>
       specialize this w' h2
-      simp [max_def]
+      simp
       let _ := m_order' mPref m
       simp [m_order'_le_def]
       exact this

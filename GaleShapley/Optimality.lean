@@ -86,9 +86,7 @@ lemma neverRejectedByPossibleMatch' (state: GaleShapleyState M W) (m: M) (w: W):
       · case _ m'_curMatch =>
         simp at m_rejectee
         simp [m'_curMatch, m_rejectee] at m'_rfl
-        split at m'_rfl
-        · exact False.elim (m'_ne_m m'_rfl)
-        · omega
+        grind
       · simp [m_rejectee] at m'_rfl
         rcases m'_proposed_or_matched with m'_proposed | m'_matched
         · unfold proposedAtState at m'_proposed

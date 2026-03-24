@@ -1,4 +1,5 @@
 import Mathlib.Data.Set.Finite.Basic
+import Mathlib.Order.WithBot
 
 /-!
 
@@ -197,7 +198,7 @@ def createMatching (matching: M → WithBot W) (invMatching: W → WithBot M)
 lemma matching_equal_cardinality (matching: Matching M W) (R: Finset M)
     (matched: ∀ (r: R), ∃ w, matching r = some w)
     (hS: S = {w | ∃ (r : R), matching r = some w}.toFinset): R.card = S.card := by
-  let S0 := (some '' S.toSet).toFinset
+  let S0 := (some '' SetLike.coe S).toFinset
   let matching_restrict' := Set.restrict R matching
   let matching_restrict := Set.codRestrict matching_restrict' S0 (by
     intro r

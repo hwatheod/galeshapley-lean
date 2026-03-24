@@ -82,16 +82,16 @@ lemma isUnstableEquiv (mPref: Pref M W) (wPref: Pref W M)
     · case _ w' =>
       simp
       cases matching⁻¹ w
-      · simp [WithBot.coe_lt_coe, m_order'_lt_def]
+      · simp [m_order'_lt_def]
       · simp [WithBot.coe_lt_coe, m_order'_lt_def]
         omega
   · cases h: matching m
     · cases matching⁻¹ w
       · simp
       · simp [WithBot.coe_lt_coe, m_order'_lt_def]
-    · simp [h]
+    · simp
       cases matching⁻¹ w
-      · simp [WithBot.coe_lt_coe, m_order'_lt_def]
+      · simp [m_order'_lt_def]
       · simp [WithBot.coe_lt_coe, m_order'_lt_def]
         omega
 
@@ -245,6 +245,8 @@ lemma image_prefer_f_prefer_g {m: M} (h: m ∈ all_m_prefer_f tsm):
   simp [all_m_prefer_f] at h
   have h' := h
   simp [m_prefers_f] at h
+  let _ := m_order' tsm.mPref m
+  rw [WithBot.lt_iff_exists] at h
   obtain ⟨w, m_f_matches_w, _⟩ := h
   use w
   constructor
@@ -394,8 +396,7 @@ lemma sameSinglesM (m: M): tsm.f m = ⊥ ↔ tsm.g m = ⊥ := by
 
   have m_f: m_prefers_f tsm m := by
     simp [m_prefers_f]
-    use w
-    simp [m_f_matches_w, m_g_unmatched]
+    simp [← m_f_matches_w, m_g_unmatched]
 
   have := tsm_g_restrict_surjective tsm m (by unfold all_m_prefer_f; simp [m_f])
   obtain ⟨w', _, m_g_matches_w'⟩ := this
@@ -433,9 +434,7 @@ lemma supMatchingClosed (tsm: TwoStableMatchings M W):
   · have gf: tsm.g m2 ≤ tsm.f m2 := le_of_not_ge h2
     specialize this (fg tsm) gf
     simp only [fg_f, fg_g] at this
-    rw [max_comm] at this
-    let _ := m_order tsm.mPref m1
-    rwa [max_comm] at this
+    grind
   intros w m2_matches_w m1_eq_m2
   cases hf2: (tsm.f m2)
   · have: tsm.g m2 = ⊥ := (sameSinglesM tsm m2).mp hf2
@@ -483,7 +482,7 @@ lemma supMatchingClosed (tsm: TwoStableMatchings M W):
                   let _ := m_order tsm.mPref m2
                   let _ := m_order' tsm.mPref m2
                   simp at bad
-                  exact le_antisymm bad h2
+                  grind
                 rw [← this] at hf2
                 exact h.1 hf2
 
@@ -554,7 +553,7 @@ lemma supMatching_inverse_lemma:
     · simp at h
       rw [h] at h2
       simp at h2
-  simp [min_def, h2]
+  simp [h2]
 
   by_cases h: tsm.f⁻¹ w ≠ tsm.g⁻¹ w
   · have w_g: w_prefers_g tsm w := by
@@ -608,7 +607,7 @@ lemma supMatchingStable (tsm: TwoStableMatchings M W):
   obtain ⟨mUnstable, wUnstable⟩ := unstable
 
   simp [supMatching, Pi.sup_def] at mUnstable
-  simp [supMatching_inverse_lemma tsm, Pi.inf_def] at wUnstable
+  simp [supMatching_inverse_lemma tsm] at wUnstable
 
   have f_stable := tsm.f_stable
   simp [isStableMatching, isUnstableEquiv, isUnstablePair'] at f_stable
@@ -630,8 +629,8 @@ lemma infMatchingClosed (tsm: TwoStableMatchings M W):
   intro lattice
   have := supMatching_inverse_lemma (mw tsm)
   simp at this
-  rw [← this]
-  exact (supMatching (mw tsm))⁻¹.matchingCondition
+  have := (supMatching (mw tsm))⁻¹.matchingCondition
+  grind
 
 def infMatching: Matching M W :=
   let lattice := mPref_lattice tsm.mPref

@@ -95,7 +95,8 @@ def galeShapleyNextStep (state: GaleShapleyState M W): WithBot (GaleShapleyState
         intro m_matches_w0
         have: w0_curMatch = m := by
           have := inverseProperty.mp m_matches_w0
-          simp [w0_curMatch, curMatch, this]
+          simp [w0_curMatch, curMatch]
+          grind
         exact False.elim (h1.2 this)
       · exact inverseProperty.mp
     )
@@ -121,6 +122,7 @@ def galeShapleyNextStep (state: GaleShapleyState M W): WithBot (GaleShapleyState
           intro c2
           rw [← c2]
           simp [w0, proposee]
+          grind
         · have h1'': w0_curMatch = m := by tauto
           simp [newMatching, newProposeIndex, h1', ← h1'', createMatching, newMatching']
           simp [w0_curMatch, curMatch, ← w0_proposee] at h1''
@@ -180,9 +182,9 @@ def galeShapleyNextStep (state: GaleShapleyState M W): WithBot (GaleShapleyState
               by_contra bad
               simp [w0_curMatch, curMatch] at bad
               cases h3: (state.matching⁻¹ w0)
-              · simp [w0_curMatch, curMatch, h3] at bad
+              · simp [← w0_proposee, h3] at bad
               · case _ m'' =>
-                simp [w0_curMatch, curMatch, h3] at bad
+                simp [← w0_proposee, h3] at bad
                 have := inverseProperty.mpr h3
                 rw [bad, w_matches_m'] at this
                 simp at this
@@ -197,11 +199,12 @@ def galeShapleyNextStep (state: GaleShapleyState M W): WithBot (GaleShapleyState
           constructor
           · rw [← inverseProperty]
             push_neg at h1
-            simp [h1, newMatching, createMatching, newMatching']
+            simp [newMatching, createMatching, newMatching']
             rcases newMatch_options <;> tauto
           · obtain ⟨m'', w0_matches_m'', w0_prefers_m''⟩ := this
             have: m'' = w0_curMatch := by
-              simp [w0_curMatch, curMatch, w0_matches_m'']
+              simp [w0_curMatch, curMatch, ← w0_proposee]
+              exact w0_matches_m''.symm
             simp [w0_curMatch] at this
             suffices (state.wPref w0).symm w0_newMatch ≤ (state.wPref w0).symm m'' by omega
             simp [w0_newMatch, newMatch, ← m0_proposer, ← w0_proposee, ← this]
@@ -258,7 +261,6 @@ def galeShapleyFinalState (state: GaleShapleyState M W): GaleShapleyState M W :=
 termination_by
   galeShapleyTermination state
 decreasing_by
-  simp_wf
   exact galeShapleyDecreasing h
 
 variable
@@ -279,8 +281,8 @@ def initialState: GaleShapleyState M W := {
 def galeShapley: Matching M W := (galeShapleyFinalState (initialState mPref wPref)).matching
 
 abbrev isUnstablePair (matching: Matching M W) (m: M) (w: W): Prop :=
-  (matching m = ⊥ ∨ (mPref m).symm w < (mPref m).symm ((matching m).unbot' w)) ∧
-  (matching⁻¹ w = ⊥ ∨ (wPref w).symm m < (wPref w).symm ((matching⁻¹ w).unbot' m))
+  (matching m = ⊥ ∨ (mPref m).symm w < (mPref m).symm ((matching m).unbotD w)) ∧
+  (matching⁻¹ w = ⊥ ∨ (wPref w).symm m < (wPref w).symm ((matching⁻¹ w).unbotD m))
 
 abbrev isStableMatching (matching: Matching M W): Prop :=
   ∀ m, ∀ w, ¬ (isUnstablePair mPref wPref matching m w)
