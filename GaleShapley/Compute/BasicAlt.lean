@@ -314,7 +314,6 @@ lemma wPref_invariant: (galeShapleyFinalState mPref wPref).wPref = wPref :=
 
 def galeShapley: Matching M W := (galeShapleyFinalState mPref wPref).matching
 
-set_option linter.unusedVariables false in
 lemma finalStateHasNoNextStep': ∀ state: (GaleShapleyState M W),
     galeShapleyNextStep (List.getLast (galeShapleyIterate state) (galeShapleyIterateNonEmpty state)) = ⊥ := by
   intro state
