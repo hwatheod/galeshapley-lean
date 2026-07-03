@@ -322,7 +322,7 @@ lemma last_occurrence {step: Terminator α} {state: α} (P: α → Prop)
       exact ih
     · simp [h] at ex -- doesn't exist in tail, so must be the first element
       left
-      push_neg at h
+      push Not at h
       exact ⟨ex, by tauto⟩
 
 lemma stateInduction (step: Terminator α)

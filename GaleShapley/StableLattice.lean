@@ -43,10 +43,9 @@ def toMatching (f: StableMatching mPref wPref): Matching M W := {
     exact h
 }
 
-def toStableCondition (f: StableMatching mPref wPref): isStableMatching mPref wPref
+lemma toStableCondition (f: StableMatching mPref wPref): isStableMatching mPref wPref
     (toMatching mPref wPref f) := by
   unfold StableMatching at f
-  simp at f
   have := Subtype.prop f
   obtain ⟨_, f_stable⟩ := this
   unfold toMatching
@@ -60,7 +59,6 @@ def gsStableMatching: StableMatching mPref wPref :=
 instance : Inhabited (StableMatching mPref wPref) where
   default := gsStableMatching mPref wPref
 
-set_option linter.unusedVariables false in
 lemma stableMatchings_supClosed:
   have := mPref_lattice mPref
   SupClosed (StableMatching mPref wPref) := by
@@ -89,8 +87,7 @@ lemma stableMatchings_supClosed:
   have stable := supMatchingStable tsm
   exact stable
 
-set_option linter.unusedVariables false in
-def stableMatchings_infClosed:
+lemma stableMatchings_infClosed:
   have := mPref_lattice mPref
   InfClosed (StableMatching mPref wPref) := by
   intros lattice f0 hf0 g0 hg0

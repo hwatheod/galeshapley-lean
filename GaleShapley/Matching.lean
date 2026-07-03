@@ -54,7 +54,7 @@ def emptyMatching: Matching M W := {
 }
 
 /- Define the inverse matching of a matching, `inverseMatching`. -/
-def matchingUniquePreimage (matching: Matching M W)
+theorem matchingUniquePreimage (matching: Matching M W)
     (w: W): (∃ m, matching m = some w) → ∃! m, matching m = some w := by
   intro h
   obtain ⟨m', hm'⟩ := h
@@ -138,7 +138,7 @@ theorem inversePropertyNone {matching: Matching M W}:
   constructor
   · intros w_matches_none
     by_contra bad
-    push_neg at bad
+    push Not at bad
     rw [WithBot.ne_bot_iff_exists] at bad
     obtain ⟨m, m_matches_w⟩ := bad
     specialize w_matches_none m

@@ -98,16 +98,16 @@ lemma matching_nextState {state: (GaleShapleyState M W)}
       else if m = w0_newMatch then some w0
       else ⊥
   := by
-have := matching_nextState' (nextStateSomeIsNotDone nextStateSome) m
-simp only [nextStateSome] at this
-exact this
+      have := matching_nextState' (nextStateSomeIsNotDone nextStateSome) m
+      simp only [nextStateSome] at this
+      exact this
 
 lemma becameMatchedIsProposer {state: GaleShapleyState M W} (h: notDone state)
     (m_unmatched_before: state.matching m = ⊥)
     (m_matched_after: ((galeShapleyNextStep state).unbot (notDoneIsSome h)).matching m ≠ ⊥):
     m = choose h := by
   by_contra bad
-  push_neg at bad
+  push Not at bad
   have := matching_nextState' h m
   simp [m_unmatched_before, bad] at this
   split_ifs at this <;> try contradiction
@@ -199,7 +199,7 @@ lemma proposerRemainsSingleImpliesRejected {state: GaleShapleyState M W} {m: M}
         have := newMatch_choices (nextStateSomeIsNotDone nextStateSome)
         rw [← m_proposed, h] at this
         simp at this
-        push_neg at m_ne_newMatch m'_ne_newMatch
+        push Not at m_ne_newMatch m'_ne_newMatch
         symm at m_ne_newMatch
         symm at m'_ne_newMatch
         rcases this <;> contradiction
@@ -666,7 +666,7 @@ lemma proposedNeverRejectedImpliesFinalMatch {state: GaleShapleyState M W} (h: n
     have := matching_nextState nextStep m
     simp [← m_proposer, w_proposee] at this
     unfold rejectedAtState at not_rejected_now
-    push_neg at not_rejected_now
+    push Not at not_rejected_now
     specialize not_rejected_now w_proposee
     rw [this]
     split_ifs <;> try rfl
@@ -685,7 +685,7 @@ lemma singleImpliesRejectedByAll (m_single: galeShapley mPref wPref m = ⊥):
     ∀ w, ∃ state ∈ galeShapleyList mPref wPref, ∃ (h: notDone state),
         rejectedAtState h m w := by
   by_contra bad
-  push_neg at bad
+  push Not at bad
   obtain ⟨w, w_never_rejected'⟩ := bad
   have w_never_rejected: neverRejectedFromState (initialState mPref wPref) m w := by
     unfold neverRejectedFromState
@@ -763,7 +763,7 @@ lemma rejectedByPreferred {state: GaleShapleyState M W}
           rw [s_proposeIndex] at m_prefers_w'
           have: s_pred.proposeIndex m = ↑((mPref m).symm w') := by omega
           refine ⟨s_pred, h_s_pred, (iterateNextState s_pred_is_pred),
-            (by push_neg; symm; exact iterate_ne_predecessor s_pred_is_pred),
+            (by push Not; symm; exact iterate_ne_predecessor s_pred_is_pred),
             nextStateSomeIsNotDone s_pred_is_pred, ?_⟩
           have w'_proposee: proposee (nextStateSomeIsNotDone s_pred_is_pred) = w' := by
             unfold proposee
@@ -797,7 +797,7 @@ lemma rejectedByPreferred {state: GaleShapleyState M W}
           exact Equiv.injective (mPref m).symm this
         rw [this]
         refine ⟨s_pred, h_s_pred, (iterateNextState s_pred_is_pred),
-            (by push_neg; symm; exact iterate_ne_predecessor s_pred_is_pred),
+            (by push Not; symm; exact iterate_ne_predecessor s_pred_is_pred),
             nextStateSomeIsNotDone s_pred_is_pred, ?_⟩
         have := becameSingleImpliesRejected s_pred_is_pred (by simp [h2]) h3
         unfold rejectedAtState

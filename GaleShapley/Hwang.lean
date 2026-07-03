@@ -101,7 +101,7 @@ theorem hwangTheorem_case1 (matching: Matching M W) (h: hwang_case1_hypothesis m
         exact w_ne_w'
       omega
   · by_contra w_weakprefers_m
-    push_neg at w_weakprefers_m
+    push Not at w_weakprefers_m
     have: (wPref w).symm m ≠ (wPref w).symm m' := by
       apply Function.Injective.ne
       apply Equiv.injective
@@ -185,7 +185,7 @@ lemma neg_hwang_case1_lemma: ¬ (hwang_case1_hypothesis mPref wPref matching) �
     both_same_spouses_hypothesis mPref wPref matching := by
   intro neg_hwang_case1
   unfold hwang_case1_hypothesis at neg_hwang_case1
-  set_option push_neg.use_distrib true in push_neg at neg_hwang_case1
+  set_option push_neg.use_distrib true in push Not at neg_hwang_case1
   simp at neg_hwang_case1
   unfold both_same_spouses_hypothesis
 
@@ -342,7 +342,7 @@ theorem hwangTheorem (matching: Matching M W) (existsRevendicateur: ∃ m, reven
     have notLast: notDone last_rev_proposal := by
       by_contra bad
       unfold notDone at bad
-      push_neg at bad
+      push Not at bad
       specialize bad r r_unmatched
       simp at bad
       have := noMoreProposalsImpliesSingle mPref wPref r ⟨last_rev_proposal, h_lrp, r_unmatched, bad⟩
@@ -541,7 +541,7 @@ theorem hwangTheorem (matching: Matching M W) (existsRevendicateur: ∃ m, reven
         -- w rejected m so m prefers w to his final gs match w0, whom he weak-prefers to his
         -- `matching` match w'' since m is a non-revendicateur.
         unfold revendicateur at m_notrev
-        push_neg at m_notrev
+        push Not at m_notrev
         specialize m_notrev w'' h
         obtain ⟨w0, m_gs_matches_w0, w0_inequality⟩ := m_notrev
         suffices (mPref m).symm w < (mPref m).symm w0 by omega
@@ -594,7 +594,7 @@ theorem proposerOptimal' (matching: Matching M W) (stable: isStableMatching mPre
    any matching (stable or not). -/
 theorem paretoOptimality (matching: Matching M W) (h: Nonempty M): ∃ m, ¬ (revendicateur mPref wPref matching m) := by
   by_contra bad
-  push_neg at bad
+  push Not at bad
   let m := Classical.choice h
   have := hwangTheorem mPref wPref matching ⟨m, bad m⟩
   obtain ⟨m, m', w, _, _, nonRevendicateur, _⟩ := this
@@ -627,10 +627,10 @@ lemma unstablePairLemma (mPref': Pref M W) (wPref': Pref W M)
 theorem menShouldntLie (mPref': Pref M W) (existsLiar: mPref ≠ mPref'):
     ∃ m, mPref m ≠ mPref' m ∧ ¬ (revendicateur mPref wPref (galeShapley mPref' wPref) m) := by
   by_contra bad
-  push_neg at bad
+  push Not at bad
   have: ∃ m, mPref m ≠ mPref' m := by
     by_contra bad2
-    push_neg at bad2
+    push Not at bad2
     have := funext bad2
     contradiction
   obtain ⟨m, mLied⟩ := this

@@ -49,7 +49,7 @@ lemma neverRejectedByPossibleMatch' (state: GaleShapleyState M W) (m: M) (w: W):
   clear this
   · intros s _ ih m w possible
     by_contra bad
-    push_neg at bad
+    push Not at bad
     obtain ⟨rejection_state, h_rjs, nd_rjs, rejection_before_s, w_rejected_m⟩ := bad
     unfold possibleMatch at possible
     obtain ⟨matching, m_matches_w, stable⟩ := possible
@@ -111,7 +111,7 @@ lemma neverRejectedByPossibleMatch' (state: GaleShapleyState M W) (m: M) (w: W):
           rw [bad] at h
           exact m'_ne_m (matchingCondition' h m_matches_w)
         by_contra bad
-        push_neg at bad
+        push Not at bad
         have m'_prefers_w': (mPref m').symm w' < (mPref m').symm w := by
           by_contra bad2
           have: (mPref m').symm w' = (mPref m').symm w := by omega
@@ -155,7 +155,7 @@ lemma neverRejectedByPossibleMatch: possibleMatch mPref wPref m w →
   have := neverRejectedByPossibleMatch' mPref wPref (galeShapleyFinalState mPref wPref) m w ?_ possible
   by_contra bad
   unfold neverRejectedFromState at bad
-  push_neg at bad
+  push Not at bad
   obtain ⟨s, hs, nd, rejected⟩ := bad
   simp at hs
   specialize this s hs nd
@@ -175,7 +175,7 @@ theorem proposerOptimal (matching: Matching M W) (stable: isStableMatching mPref
   split
   · case _ m_gs_single =>
     by_contra bad
-    push_neg at bad
+    push Not at bad
     rw [WithBot.ne_bot_iff_exists] at bad
     obtain ⟨w, m_matches_w⟩ := bad
 
@@ -212,7 +212,7 @@ theorem proposerOptimal (matching: Matching M W) (stable: isStableMatching mPref
         use matching
       have never_rejected_by_w' := neverRejectedByPossibleMatch mPref wPref m_w'_possible_match
       by_contra bad
-      push_neg at bad
+      push Not at bad
       have := (proposeIndexInequality mPref wPref m w').mpr (by omega)
       obtain ⟨s', hs', h', m_proposed_w'⟩ := this
       have m_gs_matches_w' := proposedNeverRejectedImpliesFinalMatch h' m_proposed_w' ?_
@@ -245,7 +245,7 @@ theorem receiverPessimal (matching: Matching M W) (stable: isStableMatching mPre
     unfold isStableMatching at stable
     specialize stable m w
     unfold isUnstablePair at stable
-    set_option push_neg.use_distrib true in push_neg at stable
+    set_option push_neg.use_distrib true in push Not at stable
     rw [w_matches_m'] at stable
     simp at stable
 

@@ -159,7 +159,7 @@ def w_prefers_g (w: W): Prop := m_prefers_g (mw tsm) w
 lemma m_prefers_f_or_g {m: M} (ne: tsm.f m ≠ tsm.g m):
     m_prefers_f tsm m ∨ m_prefers_g tsm m := by
   by_contra bad
-  push_neg at bad
+  push Not at bad
   rcases bad with ⟨not_mf, not_mg⟩
   simp [m_prefers_f] at not_mf
   simp [m_prefers_g, fg, m_prefers_f] at not_mg
@@ -390,7 +390,7 @@ lemma sameSinglesM (m: M): tsm.f m = ⊥ ↔ tsm.g m = ⊥ := by
 
   intro tsm m m_g_unmatched
   by_contra m_f_matched
-  push_neg at m_f_matched
+  push Not at m_f_matched
   rw [WithBot.ne_bot_iff_exists] at m_f_matched
   obtain ⟨w, m_f_matches_w⟩ := m_f_matched
 
@@ -434,7 +434,11 @@ lemma supMatchingClosed (tsm: TwoStableMatchings M W):
   · have gf: tsm.g m2 ≤ tsm.f m2 := le_of_not_ge h2
     specialize this (fg tsm) gf
     simp only [fg_f, fg_g] at this
-    grind
+    rw [sup_comm] at this
+    intro w h
+    specialize this w h
+    let _ := m_order tsm.mPref m1
+    rwa [sup_comm] at this
   intros w m2_matches_w m1_eq_m2
   cases hf2: (tsm.f m2)
   · have: tsm.g m2 = ⊥ := (sameSinglesM tsm m2).mp hf2
@@ -466,7 +470,7 @@ lemma supMatchingClosed (tsm: TwoStableMatchings M W):
             rw [m1_eq_m2] at hg1
             exact matchingCondition' hg1 hg2
           · simp [max_def, h1] at m1_eq_m2 -- m1 prefers f
-            push_neg at h1
+            push Not at h1
             rw [m2_matches_w] at h2 hg2
             rw [m1_eq_m2] at h1 hf1
 
@@ -489,7 +493,7 @@ lemma supMatchingClosed (tsm: TwoStableMatchings M W):
               have w_g: w_prefers_g tsm w := asymmetric_preference_f tsm hf1 m1_f
               have w_f: w_prefers_f tsm w := asymmetric_preference_g tsm hg2 m2_g
               exact False.elim (w_cannot_prefer_f_and_g tsm w_f w_g)
-            · set_option push_neg.use_distrib true in push_neg at h
+            · set_option push_neg.use_distrib true in push Not at h
               rcases h with c1 | c2
               · exact matchingCondition' hf1 c1
               · exact matchingCondition' c2 hg2
@@ -573,7 +577,7 @@ lemma supMatching_inverse_lemma:
       rw [← inverseProperty] at h3 ⊢
       have := supMatching_mf tsm m this
       rwa [h3] at this
-  · push_neg at h
+  · push Not at h
     cases h3: tsm.f⁻¹ w
     · rw [h3] at h
       symm at h
@@ -629,8 +633,9 @@ lemma infMatchingClosed (tsm: TwoStableMatchings M W):
   intro lattice
   have := supMatching_inverse_lemma (mw tsm)
   simp at this
-  have := (supMatching (mw tsm))⁻¹.matchingCondition
-  grind
+  have mc := (supMatching (mw tsm))⁻¹.matchingCondition
+  rw [this] at mc
+  exact mc
 
 def infMatching: Matching M W :=
   let lattice := mPref_lattice tsm.mPref
@@ -663,6 +668,5 @@ lemma infMatchingStable (tsm: TwoStableMatchings M W):
   rw [infMatching_lemma]
 
   have supStable := supMatchingStable (mw tsm)
-  simp at supStable
   apply stableSymmetry at supStable
   exact supStable

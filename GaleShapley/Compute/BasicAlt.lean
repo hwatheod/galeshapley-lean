@@ -229,7 +229,7 @@ decreasing_by
     intro i
     split <;> omega
 
-    push_neg at cond
+    push Not at cond
     obtain ⟨i, hi, hi2, hi3⟩ := cond
     use i
     have hi' : ¬ Fintype.card W ≤ state.proposeIndex i := by omega
@@ -371,7 +371,7 @@ theorem galeShapleyGivesStableMatching: isStableMatching mPref wPref (galeShaple
     cases h: ((galeShapley mPref wPref) m)
     · specialize this h
       rw [this] at m_proposed_w
-      push_neg at m_proposed_w
+      push Not at m_proposed_w
       have : (mPref m).symm w < Fintype.card W := by simp only [Fin.is_lt]
       omega
     · case _ w' =>

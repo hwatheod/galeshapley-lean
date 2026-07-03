@@ -155,7 +155,7 @@ def galeShapleyNextStep (state: GaleShapleyState M W): WithBot (GaleShapleyState
           by_cases h2: m ≠ m0
           · simp [h2, newProposeIndex] at lt_newProposeIndex
             exact lt_newProposeIndex
-          · push_neg at h2
+          · push Not at h2
             simp [h2, newProposeIndex] at lt_newProposeIndex ⊢
             by_contra bad
             have eq: (state.mPref m0).symm w = ⟨state.proposeIndex m0, hm0.2⟩ := by
@@ -192,13 +192,13 @@ def galeShapleyNextStep (state: GaleShapleyState M W): WithBot (GaleShapleyState
             simp [c1, c2, newMatching, createMatching, newMatching']
             exact w_matches_m'
           · exact w_prefers_m'
-        · push_neg at h2
+        · push Not at h2
           rw [h2] at lt_newProposeIndex prev this ⊢
           simp [h2] at h1
           use w0_newMatch
           constructor
           · rw [← inverseProperty]
-            push_neg at h1
+            push Not at h1
             simp [newMatching, createMatching, newMatching']
             rcases newMatch_options <;> tauto
           · obtain ⟨m'', w0_matches_m'', w0_prefers_m''⟩ := this

@@ -144,7 +144,7 @@ def galeShapleyNextStep (state: GaleShapleyState M W): WithBot (GaleShapleyState
           simp [newMatching, createMatching, newMatching']
           split_ifs <;> try contradiction
           · exact h m
-          · push_neg at w_ne_w0; simp; exact w_ne_w0.symm
+          · push Not at w_ne_w0; simp; exact w_ne_w0.symm
           · exact WithBot.bot_ne_coe
         · case _ m =>
           rw [← inverseProperty] at h ⊢
@@ -156,7 +156,7 @@ def galeShapleyNextStep (state: GaleShapleyState M W): WithBot (GaleShapleyState
           split_ifs
           · exact h
           · case _ c1 c2 =>
-            set_option push_neg.use_distrib true in push_neg at c1
+            set_option push_neg.use_distrib true in push Not at c1
             rcases c1
             · contradiction
             · case _ c3 =>
@@ -193,7 +193,7 @@ def galeShapleyNextStep (state: GaleShapleyState M W): WithBot (GaleShapleyState
           · intro
             contradiction
         · have h1'': w0_curMatch = m := by
-            set_option push_neg.use_distrib true in push_neg at h1
+            set_option push_neg.use_distrib true in push Not at h1
             rcases h1 with c1 | c2
             · exact False.elim (h1' c1)
             · exact c2
@@ -224,7 +224,7 @@ def galeShapleyNextStep (state: GaleShapleyState M W): WithBot (GaleShapleyState
           by_cases h2: m ≠ m0
           · simp [h2, newProposeIndex] at lt_newProposeIndex
             exact lt_newProposeIndex
-          · push_neg at h2
+          · push Not at h2
             simp [h2, newProposeIndex] at lt_newProposeIndex ⊢
             by_contra bad
             have eq: (state.mPref m0).symm w = state.proposeIndex m0 := by omega
@@ -239,7 +239,7 @@ def galeShapleyNextStep (state: GaleShapleyState M W): WithBot (GaleShapleyState
           constructor
           · simpa [inv_is_inv, h2, invNewMatching']
           · exact w_prefers_m'
-        · push_neg at h2
+        · push Not at h2
           simp only [h2, inv_is_inv, ne_eq, ite_not, ↓reduceIte, WithBot.coe_inj, exists_eq_left',
             ge_iff_le, invNewMatching']
           rw [h2] at this
@@ -483,7 +483,7 @@ lemma unmatchedExhaustedProposals: ∀ m, galeShapley mPref wPref m = ⊥ →
   have := finalStateHasNoNextStep mPref wPref
   apply nextStateNoneisDone at this
   unfold notDone at this
-  push_neg at this
+  push Not at this
   simp at this
   exact this
 
@@ -512,7 +512,7 @@ theorem galeShapleyGivesStableMatching: isStableMatching mPref wPref (galeShaple
     · have := unmatchedExhaustedProposals mPref wPref m
       specialize this h
       rw [this] at m_proposed_w
-      push_neg at m_proposed_w
+      push Not at m_proposed_w
       have : (mPref m).symm w < Fintype.card W := by simp only [Fin.is_lt]
       omega
     · case _ w' =>

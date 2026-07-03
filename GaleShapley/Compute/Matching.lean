@@ -125,7 +125,7 @@ theorem inversePropertyNone {matching: Matching M W}:
   constructor
   · intros w_matches_none
     by_contra bad
-    push_neg at bad
+    push Not at bad
     rw [WithBot.ne_bot_iff_exists] at bad
     obtain ⟨m, m_matches_w⟩ := bad
     specialize w_matches_none m
